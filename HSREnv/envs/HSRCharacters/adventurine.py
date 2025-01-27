@@ -1,4 +1,5 @@
-from HSREnv.envs.hsr import actionSignal, addAction
+import random
+from datetime import datetime
 
 class Adventurine():
     def __init__(self, hp = 3098, atk = 1441, defence = 3976, spd = 113, critRate = 0.435, critDamage = 1.895):
@@ -18,12 +19,15 @@ class Adventurine():
         self.energy = 0
         self.energyCost = 110
         self.blindBet = 0
+        random.seed(datetime.now().timestamp())
+
+        self.updates = []
 
     def addEnergy(self, x):
         self.energy = min(self.energyCost, self.energy + x)
 
     def addBlindBet(self, x):
-        self.blindBet = min(9, self.blindBet + 1)
+        self.blindBet = min(9, self.blindBet + x)
 
     def getDefence(self):
         return self.defence * self.defBuff
@@ -34,8 +38,14 @@ class Adventurine():
     def getSpeed(self):
         return self.spd * self.speedBuff
 
+    def addAction(self, dict):
+        self.updates.append(["addAction", dict])
+    
+    def actionSignal(self, dict):
+        self.updates.append(["actionSignal", dict])
+        
     def basic(self):
-        action_data = {
+        actionData = {
             "char": "Adventurine",
             "action": "basic",
             "actionType": "atk",
@@ -45,13 +55,10 @@ class Adventurine():
             "base": self.getDefence(),
             "effects": {}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)    
 
     def skill(self):
-        action_data = {
+        actionData = {
             "char": "Adventurine",
             "action": "skill",
             "actionType": "shield",
@@ -61,14 +68,13 @@ class Adventurine():
             "base": self.getDefence() * 0.24 + 320,
             "effects": {}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)    
 
     def ultimate(self):
         self.energy = 5
-        action_data = {
+        self.addBlindBet(random.randint(1, 7))
+
+        actionData = {
             "char": "Adventurine",
             "action": "ultimate",
             "actionType": "atk",
@@ -78,16 +84,13 @@ class Adventurine():
             "base": self.getDefence() * 2.7,
             "effects": {"critDamageDebuff": 0.15}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)    
 
     def checkUltimate(self):
         return self.energy >= self.energyCost
 
     def talent(self):
-        action_data = {
+        actionData = {
             "char": "Adventurine",
             "action": "talent",
             "actionType": "atk",
@@ -97,10 +100,7 @@ class Adventurine():
             "base": self.getDefence() * 0.25,
             "effects": {}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)    
 
     def actionDetect(self, actionType, actionChar):
         if actionType == "hit":
@@ -110,5 +110,4 @@ class Adventurine():
 
         if self.blindBet >= 7:
             self.blindBet -= 7
-            return {"actionSignal": "None",
-                    "addAction": ["Adventurine", "talent", -1]}
+            self.addAction(["Adventurine", "talent", -1])

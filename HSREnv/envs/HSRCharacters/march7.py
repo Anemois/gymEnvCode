@@ -27,11 +27,13 @@ class March7():
 
         random.seed(datetime.now().timestamp() + 1)
 
+        self.updates = []
+
     def addEnergy(self, x):
         self.energy = min(self.energyCost, self.energy + x)
 
     def addCharge(self, x):
-        self.charge = min(10, self.charge + 1)
+        self.charge = min(10, self.charge + x)
 
     def getDefence(self):
         return self.defence * self.defBuff
@@ -41,13 +43,23 @@ class March7():
 
     def getSpeed(self):
         return self.spd * self.speedBuff
+    
+    def addAction(self, dict):
+        self.updates.append(["addAction", dict])
+    
+    def actionSignal(self, dict):
+        self.updates.append(["actionSignal", dict])
+
+    def checkCharge(self):
+        if(self.charge >= 7):
+            self.enchanceBasic = True
 
     def basic(self):
         self.followUpCharge = True
         if not self.enchanceBasic:
             self.addEnergy(25)
             self.addCharge(1)
-            action_data = {
+            actionData = {
                 "char": "March7",
                 "action": "basic",
                 "actionType": "atk",
@@ -57,10 +69,8 @@ class March7():
                 "base": self.getAttack() * 1,
                 "effects": {"m7SwordPlay": 1}
             }
-            return {
-                "actionSignal": action_data,
-                "addAction": "None"
-            }
+            self.actionSignal(actionData)  
+            self.checkCharge()
         else:
             self.addEnergy(35)
             actionSignal("March7", "atk")
@@ -73,7 +83,7 @@ class March7():
             self.SUPERCHARGED = False
             if supercharge:
                 self.critDamage += 0.5
-            action_data = {
+            actionData = {
                 "char": "March7",
                 "action": "basic",
                 "actionType": "atk",
@@ -87,16 +97,13 @@ class March7():
                 self.critDamage -= 0.5
             self.charge -= 7
             self.dmgBuff -= 0.8
-            return {
-                "actionSignal": action_data,
-                "addAction": "None"
-            }
+            self.actionSignal(actionData)
 
     def skill(self):
         self.followUpCharge = True
         self.addEnergy(35)
         self.speedBuff += 0.1
-        action_data = {
+        actionData = {
             "char": "March7",
             "action": "skill",
             "actionType": "buff",
@@ -106,15 +113,12 @@ class March7():
             "base": 0,
             "effects": {"March7Skill": ["speedBuff", 0.1, 1, 1], "notSelf": 1}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
 
     def ultimate(self):
         self.energy = 5
         self.SUPERCHARGED = True
-        action_data = {
+        actionData = {
             "char": "March7",
             "action": "ultimate",
             "actionType": "atk",
@@ -124,10 +128,7 @@ class March7():
             "base": self.getAttack() * 2.4,
             "effects": {"m7SwordPlay": 1}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
 
     def checkUltimate(self):
         return self.energy >= self.energyCost
@@ -135,7 +136,7 @@ class March7():
     def talent(self):
         self.addEnergy(5)
         self.addCharge(1)
-        action_data = {
+        actionData = {
             "char": "March7",
             "action": "talent",
             "actionType": "atk",
@@ -145,10 +146,8 @@ class March7():
             "base": self.getAttack() * 0.6,
             "effects": {"m7SwordPlay": 1}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
+        self.checkCharge()
 
     def actionDetect(self, actionType, actionChar):
         if actionType == "start":
@@ -156,8 +155,8 @@ class March7():
 
         if actionType == "atk" and actionChar == self.shifu:
             self.addCharge(1)
+            self.checkCharge()
             if self.followUpCharge:
                 self.followUpCharge = False
-                return {"actionSignal": "None",
-                    "addAction": ["Adventurine", "talent", -1]}
+                self.addAction(["Adventurine", "talent", -1])
                 

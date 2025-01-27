@@ -25,6 +25,8 @@ class Robin():
 
         random.seed(datetime.now().timestamp() + 1)
 
+        self.updates = []
+
     def addEnergy(self, x):
         self.energy = min(self.energyCost, self.energy + x * self.energyRegenRate)
 
@@ -39,11 +41,17 @@ class Robin():
 
     def getSpeed(self):
         return 90 if self.singing else self.spd * self.speedBuff
-
+    
+    def addAction(self, dict):
+        self.updates.append(["addAction", dict])
+    
+    def actionSignal(self, dict):
+        self.updates.append(["actionSignal", dict])
+        
     def basic(self):
         self.countdown -= 1
-        if self.countdown == 0:
-            action_data = {
+        if self.countdown <= 0:
+            actionData = {
                 "char": "Robin",
                 "action": "skill",
                 "actionType": "buffEnd",
@@ -53,13 +61,10 @@ class Robin():
                 "base": 0,
                 "effects": {"RobinSkill": ["dmgBuff", 0.5, 1, -1]}
             }
-            return {
-                "actionSignal": action_data,
-                "addAction": "None"
-            }
+            self.actionSignal(actionData)
 
         self.addEnergy(20)
-        action_data = {
+        actionData = {
             "char": "Robin",
             "action": "basic",
             "actionType": "atk",
@@ -71,15 +76,12 @@ class Robin():
             "break": 10,
             "effects": {}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
 
     def skill(self):
         self.countdown = 3
         self.addEnergy(30)
-        action_data = {
+        actionData = {
             "char": "Robin",
             "action": "skill",
             "actionType": "buff",
@@ -89,15 +91,12 @@ class Robin():
             "base": 0,
             "effects": {"RobinSkill": ["dmgBuff", 0.5, 1, 1]}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
 
     def ultimate(self):
         self.energy = 5
         self.singing = True
-        action_data = {
+        actionData = {
             "char": "Robin",
             "action": "ultimate",
             "actionType": "buff",
@@ -107,10 +106,7 @@ class Robin():
             "base": 0,
             "effects": {"RobinUltBuff": ["atkBuff", 0.3, 1, 1], "RobinUltAtk": ["followAtk", self.getAttack() * 1.2, 1, 1]}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"
-        }
+        self.actionSignal(actionData)
 
     def checkUltimate(self):
         return self.energy >= self.energyCost
@@ -120,7 +116,7 @@ class Robin():
             self.addCharge(2)
 
         if actionType == "start":
-            action_data = {
+            actionData = {
                 "char": "Robin",
                 "action": "skill",
                 "actionType": "buff",
@@ -130,5 +126,4 @@ class Robin():
                 "base": 0,
                 "effects": {"RobinTalent": ["critDamage", 0.2, 1, 1]}
             }
-            return {"actionType": action_data,
-                    "addAction": "None"}
+            self.actionSignal(actionData)

@@ -1,4 +1,3 @@
-from HSREnv.envs.hsr import actionSignal, addAction
 
 class Feixiao():
     def __init__(self, hp = 3311, atk = 2603, defence = 1331, spd = 142, critRate = 82.7, critDamage = 2.40):
@@ -15,8 +14,11 @@ class Feixiao():
 
         self.energyRegenRate = 1
         self.aureus = 3
+        self.followUp = False
 
         self.actionValue = 10000/self.spd
+
+        self.updates = []
 
     def addAureus(self, x):
         self.aureus = min(13, self.aureus + x)
@@ -30,11 +32,15 @@ class Feixiao():
     def getSpeed(self):
         return self.speed * self.speedBuff
 
-    def buffs(self, atk):
-        return atk*self.atkBuff*self.dmgBuff
+    def addAction(self, dict):
+        self.updates.append(["addAction", dict])
+    
+    def actionSignal(self, dict):
+        self.updates.append(["actionSignal", dict])
 
     def basic(self):    
-        action_data = {
+        self.followUp = True
+        actionData = {
             "char": "Feixiao",
             "action": "basic",
             "actionType": "atk",
@@ -44,12 +50,11 @@ class Feixiao():
             "base": self.getAttack() * 1,
             "effects": {}
         }
-        return {
-            "actionSignal": action_data,
-            "addAction": "None"}
+        self.actionSignal(actionData)
 
     def skill(self):
-        action_data = {
+        self.followUp = True
+        actionData = {
             "char": "Feixiao",
             "action": "basic",
             "actionType": "atk",
@@ -58,14 +63,13 @@ class Feixiao():
             "hits": 1,
             "base": self.getAttack() * 2,
             "effects": {}
-        }        
-        return {
-            "actionSignal": action_data,
-            "addAction": ["Feixiao", "talent", -1]}
+        }    
+        self.actionSignal(actionData)    
+        self.addAction(["Feixiao", "talent", -1])
 
     def ultimate(self):
         self.aureus -= 6
-        action_data = {
+        actionData = {
             "char": "Feixiao",
             "action": "basic",
             "actionType": "atk",
@@ -75,15 +79,13 @@ class Feixiao():
             "base": self.getAttack() * 7,
             "effects": {}
         }
-        
-        return {"actionSignal": action_data,
-                "addAction": "None"}
+        self.actionSignal(actionData)    
 
     def checkUltimate(self):
         return self.aureus >= 6
 
     def talent(self):
-        action_data = {
+        actionData = {
             "char": "Feixiao",
             "action": "basic",
             "actionType": "atk",
@@ -93,9 +95,11 @@ class Feixiao():
             "base": self.getAttack() * 1.1,
             "effects": {}
         }
-        return {"actionSignal": action_data,
-                "addAction" : "None"}
+        self.actionSignal(actionData) 
 
     def actionDetect(self, actionType, actionChar):
         if(actionType == "atk"):
             self.addAureus(0.5)
+            if(self.followUp and actionChar != "Feixiao"):
+                self.followUp = False
+                self.addAction(["Feixiao", "talent", -1])
