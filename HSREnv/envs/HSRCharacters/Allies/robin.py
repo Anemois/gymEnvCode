@@ -1,6 +1,5 @@
 import random
 from datetime import datetime
-from HSREnv.envs.hsr import actionSignal, addAction
 
 class Robin():
     def __init__(self, hp=4313, atk=3864, defence=986, spd=115, critRate=0.079, critDamage=1.733):
