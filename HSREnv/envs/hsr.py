@@ -51,6 +51,12 @@ class HSR:
 
         self._initActionOrder()
 
+    def runAction(self):
+        if(self.actionOrder[0][2] > 0):
+            k = self.actionOrder[0][2]
+            for i in len(self.actionOrder):
+                self.actionOrder[i][2] -= k 
+
     def _initActionOrder(self):
         self.actionOrder = []
         for i in range(1, 5):
@@ -58,8 +64,20 @@ class HSR:
         for i, enemy in enumerate(self.enemies[self.wave]):
             self.actionOrder.append([enemy, "pending", enemy.actionValue]) #NOT A STRING
 
-    def action(self):
-        pass
+        self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
+        self.runAction()
+        
+    def charGoDo(self, char, action):
+        getattr(self._characters[char], action)()
+
+    def action(self, action):
+        if(self.actionOrder[0][1] != "pending"):
+            if(isinstance(self.actionOrder[0], str)):
+                self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1])
+            del self.actionOrder[0]
+            self.runAction()
+        else:
+            pass
 
     def evaluate(self):
         pass
