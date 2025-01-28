@@ -2,7 +2,7 @@ import random
 from datetime import datetime
 
 class BaseEnemy():
-    def __init__(self, hp=300000, atk=100, defence=200+10*90, spd=132, weakness = []):
+    def __init__(self, hp=300000, atk=100, defence=200+10*90, spd=132, weakness = [], toughness = 20):
         self.buffs = []
         self.hp = hp
         self.atk = atk
@@ -11,6 +11,8 @@ class BaseEnemy():
         self.atkBuff = 1
         self.defBuff = 1
         self.dmgBuff = 1
+        self.toughness = toughness
+        self.maxToughness = toughness
         self.critDamageDebuff = 0
         self.critRateDebuff = 0
         self.speedDebuff = 1
