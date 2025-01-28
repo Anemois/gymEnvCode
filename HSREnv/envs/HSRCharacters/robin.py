@@ -59,6 +59,8 @@ class Robin():
                 "hitType": "all",
                 "hits": 1,
                 "base": 0,
+                "element": ["none"],
+                "break": 0,
                 "effects": {"RobinSkill": ["dmgBuff", 0.5, 1, -1]}
             }
             self.actionSignal(actionData)
@@ -72,7 +74,7 @@ class Robin():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 1,
-            "element": "physical",
+            "element": ["physical"],
             "break": 10,
             "effects": {}
         }
@@ -89,6 +91,8 @@ class Robin():
             "hitType": "all",
             "hits": 1,
             "base": 0,
+            "element": ["none"],
+            "break": 0,
             "effects": {"RobinSkill": ["dmgBuff", 0.5, 1, 1]}
         }
         self.actionSignal(actionData)
@@ -104,6 +108,8 @@ class Robin():
             "hitType": "all",
             "hits": 1,
             "base": 0,
+            "element": ["none"],
+            "break": 0,
             "effects": {"RobinUltBuff": ["atkBuff", 0.3, 1, 1], "RobinUltAtk": ["followAtk", self.getAttack() * 1.2, 1, 1]}
         }
         self.actionSignal(actionData)
@@ -124,6 +130,8 @@ class Robin():
                 "hitType": "all",
                 "hits": 1,
                 "base": 0,
+                "element": ["none"],
+                "break": 0,
                 "effects": {"RobinTalent": ["critDamage", 0.2, 1, 1]}
             }
             self.actionSignal(actionData)

@@ -48,6 +48,8 @@ class Feixiao():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 1,
+            "element": ["wind"],
+            "break": 10,
             "effects": {}
         }
         self.actionSignal(actionData)
@@ -62,6 +64,8 @@ class Feixiao():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 2,
+            "element": ["wind"],
+            "break": 20,
             "effects": {}
         }    
         self.actionSignal(actionData)    
@@ -77,6 +81,8 @@ class Feixiao():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 7,
+            "element": ["wind"],
+            "break": 60,
             "effects": {}
         }
         self.actionSignal(actionData)    
@@ -93,6 +99,8 @@ class Feixiao():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 1.1,
+            "element": ["wind"],
+            "break": 5,
             "effects": {}
         }
         self.actionSignal(actionData) 

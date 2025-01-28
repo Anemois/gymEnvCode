@@ -23,6 +23,7 @@ class March7():
         self.SUPERCHARGED = False
         self.charge = 0
         self.shifu = "None"
+        self.shifuType = "none"
         self.followUpCharge = True
 
         random.seed(datetime.now().timestamp() + 1)
@@ -67,6 +68,8 @@ class March7():
                 "hitType": "single",
                 "hits": 1,
                 "base": self.getAttack() * 1,
+                "element": ["imaginary", self.shifuType],
+                "break": 10,
                 "effects": {"m7SwordPlay": 1}
             }
             self.actionSignal(actionData)  
@@ -91,6 +94,8 @@ class March7():
                 "hitType": "single",
                 "hits": hits,
                 "base": self.getAttack() * 0.8,
+                "element": ["imaginary", self.shifuType],
+                "break": 5 * hits,
                 "effects": {"m7SwordPlay": 1}
             }
             if supercharge:
@@ -111,6 +116,8 @@ class March7():
             "hitType": "single",
             "hits": 1,
             "base": 0,
+            "element": ["none"],
+            "break": 0,
             "effects": {"March7Skill": ["speedBuff", 0.1, 1, 1], "notSelf": 1}
         }
         self.actionSignal(actionData)
@@ -126,6 +133,8 @@ class March7():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 2.4,
+            "element": ["imaginary", self.shifuType],
+            "break": 30,
             "effects": {"m7SwordPlay": 1}
         }
         self.actionSignal(actionData)
@@ -144,6 +153,8 @@ class March7():
             "hitType": "single",
             "hits": 1,
             "base": self.getAttack() * 0.6,
+            "element": ["imaginary", self.shifuType],
+            "break": 5,
             "effects": {"m7SwordPlay": 1}
         }
         self.actionSignal(actionData)
@@ -158,5 +169,5 @@ class March7():
             self.checkCharge()
             if self.followUpCharge:
                 self.followUpCharge = False
-                self.addAction(["Adventurine", "talent", -1])
+                self.addAction(["March7", "talent", -1])
                 

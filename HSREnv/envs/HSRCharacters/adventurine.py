@@ -53,6 +53,8 @@ class Adventurine():
             "hitType": "single",
             "hits": 1,
             "base": self.getDefence(),
+            "element": ["imaginary"],
+            "break": 10,
             "effects": {}
         }
         self.actionSignal(actionData)    
@@ -66,6 +68,8 @@ class Adventurine():
             "hitType": "all",
             "hits": 1,
             "base": self.getDefence() * 0.24 + 320,
+            "element": ["none"],
+            "break": 0,
             "effects": {}
         }
         self.actionSignal(actionData)    
@@ -82,6 +86,8 @@ class Adventurine():
             "hitType": "single",
             "hits": 1,
             "base": self.getDefence() * 2.7,
+            "element": ["imaginary"],
+            "break": 30,
             "effects": {"critDamageDebuff": 0.15}
         }
         self.actionSignal(actionData)    
@@ -98,6 +104,8 @@ class Adventurine():
             "hitType": "bounce",
             "hits": 7,
             "base": self.getDefence() * 0.25,
+            "element": ["imaginary"],
+            "break": 3,
             "effects": {}
         }
         self.actionSignal(actionData)    
