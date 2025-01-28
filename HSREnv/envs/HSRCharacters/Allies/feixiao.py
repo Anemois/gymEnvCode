@@ -1,4 +1,5 @@
-
+import random
+from datetime import datetime
 class Feixiao():
     def __init__(self, hp = 3311, atk = 2603, defence = 1331, spd = 142, critRate = 82.7, critDamage = 2.40):
         self.buffs = []
