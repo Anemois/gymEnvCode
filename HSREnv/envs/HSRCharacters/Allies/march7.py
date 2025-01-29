@@ -1,23 +1,16 @@
 import random
 from datetime import datetime
+from HSREnv.envs.HSRCharacters.Allies._allyTemplate import AllyTemplate
 
-class March7():
-    def __init__(self, hp = 2864, atk = 3222, defence = 908, spd = 115, critRate = 0.716, critDamage = 2.349):
-        self.buffs = []
-        self.hp = hp
-        self.atk = atk
-        self.defence = defence
-        self.spd = spd
-        self.critRate = critRate
-        self.critDamage = critDamage
-        self.atkBuff = 1
-        self.defBuff = 1
-        self.dmgBuff = 1
-        self.speedBuff = 1
-        self.actionValue = 10000 / self.spd
+class March7(AllyTemplate):
+    def __init__(self, hp= 2864, atk= 3222, defence= 908, spd= 115, critRate= 0.716, critDamage= 2.349, energyRegenRate= 1):
+        super().__init__(hp, atk, defence, spd, critRate, critDamage)
 
         self.energy = 0
         self.energyCost = 110
+        self.energyMax = 110
+        self.energyRegenRate = energyRegenRate
+
         self.enchanceBasic = False
         self.SUPERCHARGED = False
         self.charge = 0
@@ -25,30 +18,8 @@ class March7():
         self.shifuType = "none"
         self.followUpCharge = True
 
-        random.seed(datetime.now().timestamp() + 1)
-
-        self.updates = []
-
-    def addEnergy(self, x):
-        self.energy = min(self.energyCost, self.energy + x)
-
     def addCharge(self, x):
         self.charge = min(10, self.charge + x)
-
-    def getDefence(self):
-        return self.defence * self.defBuff
-
-    def getAttack(self):
-        return self.atk * self.atkBuff
-
-    def getSpeed(self):
-        return self.spd * self.speedBuff
-    
-    def addAction(self, dict):
-        self.updates.append(["addAction", dict])
-    
-    def actionSignal(self, dict):
-        self.updates.append(["actionSignal", dict])
 
     def checkCharge(self):
         if(self.charge >= 7):
@@ -75,7 +46,7 @@ class March7():
             self.checkCharge()
         else:
             self.addEnergy(35)
-            actionSignal("March7", "atk")
+            self.actionSignal("March7", "atk")
             hits = 3 if self.SUPERCHARGED else 5
             for i in range(3):
                 if (0.6 if self.SUPERCHARGED else 0.8) >= random.random():
@@ -122,7 +93,8 @@ class March7():
         self.actionSignal(actionData)
 
     def ultimate(self):
-        self.energy = 5
+        self.addEnergy(-self.energyCost)
+        self.addEnergy(5)
         self.SUPERCHARGED = True
         actionData = {
             "char": "March7",
@@ -137,9 +109,6 @@ class March7():
             "effects": {"m7SwordPlay": 1}
         }
         self.actionSignal(actionData)
-
-    def checkUltimate(self):
-        return self.energy >= self.energyCost
 
     def talent(self):
         self.addEnergy(5)

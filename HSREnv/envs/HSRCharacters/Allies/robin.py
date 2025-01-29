@@ -1,51 +1,17 @@
 import random
 from datetime import datetime
+from HSREnv.envs.HSRCharacters.Allies._allyTemplate import AllyTemplate
 
-class Robin():
-    def __init__(self, hp=4313, atk=3864, defence=986, spd=115, critRate=0.079, critDamage=1.733):
-        self.buffs = []
-        self.hp = hp
-        self.atk = atk
-        self.defence = defence
-        self.spd = spd
-        self.critRate = critRate
-        self.critDamage = critDamage
-        self.atkBuff = 1
-        self.defBuff = 1
-        self.dmgBuff = 1
-        self.speedBuff = 1
-        self.actionValue = 10000 / self.spd
+class Robin(AllyTemplate):
+    def __init__(self, hp= 4313, atk= 3864, defence= 986, spd= 115, critRate= 0.079, critDamage= 1.733, energyRegenRate= 1.19):
+        super().__init__(hp, atk, defence, spd, critRate, critDamage)
 
-        self.countdown = 0
-        self.singing = False
         self.energy = 0
         self.energyCost = 160
-        self.energyRegenRate = 1.19
-
-        random.seed(datetime.now().timestamp() + 1)
-
-        self.updates = []
-
-    def addEnergy(self, x):
-        self.energy = min(self.energyCost, self.energy + x * self.energyRegenRate)
-
-    def addCharge(self, x):
-        self.charge = min(10, self.charge + 1)
-
-    def getDefence(self):
-        return self.defence * self.defBuff
-
-    def getAttack(self):
-        return self.atk * self.atkBuff
-
-    def getSpeed(self):
-        return 90 if self.singing else self.spd * self.speedBuff
-    
-    def addAction(self, dict):
-        self.updates.append(["addAction", dict])
-    
-    def actionSignal(self, dict):
-        self.updates.append(["actionSignal", dict])
+        self.energyMax = 160
+        self.energyRegenRate = energyRegenRate
+        self.countdown = 0
+        self.singing = False
         
     def basic(self):
         self.countdown -= 1
@@ -112,9 +78,6 @@ class Robin():
             "effects": {"RobinUltBuff": ["atkBuff", 0.3, 1, 1], "RobinUltAtk": ["followAtk", self.getAttack() * 1.2, 1, 1]}
         }
         self.actionSignal(actionData)
-
-    def checkUltimate(self):
-        return self.energy >= self.energyCost
 
     def actionDetect(self, actionType, actionChar):
         if actionType == "atk":
