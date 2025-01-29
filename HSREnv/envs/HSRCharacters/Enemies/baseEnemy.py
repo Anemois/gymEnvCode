@@ -19,7 +19,12 @@ class BaseEnemy():
         self.actionValue = 10000 / self.spd
 
         self.weakness = weakness
-        self.moves = ["signle", "blast", "single"]
+        self.obsWeakness = []
+        weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
+        for i in range(7):
+                self.obsWeakness.append(1 if self.weakness in weaknesses else 0)
+
+        self.moves = ["single", "blast"]
         self.moveptr = 0
 
         random.seed(datetime.now().timestamp() + 1)
@@ -35,12 +40,22 @@ class BaseEnemy():
     def getSpeed(self):
         return 90 if self.singing else self.spd * self.speedBuff
     
+    def getWeakness(self):
+        return self.obsWeakness
+
     def addAction(self, dict):
         self.updates.append(["addAction", dict])
     
     def actionSignal(self, dict):
         self.updates.append(["actionSignal", dict])
         
+    def doAction(self):
+        action = self.moves[self.moveptr]
+        self.moveptr += 1
+        if(self.moveptr == len(self.moves)):
+            self.moveptr = 0
+        return action
+
     def single(self):
         actionData = {
             "char": "Robin",

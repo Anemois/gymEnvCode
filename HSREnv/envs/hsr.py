@@ -24,8 +24,8 @@ class HSR:
                      self._characters[charNames[3]], self._characters[charNames[4]]]
         
         #init enemies
-        self.wave = 1
-        self.enemies = ["BLANK"]
+        self.wave = 0
+        self.enemies = []
         weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
         for i in range(enemyData["waves"]):
             thisWave = []
@@ -51,6 +51,10 @@ class HSR:
 
         self._initActionOrder()
 
+        self.lastTarget = 0
+        self.lastHp = [0, 0, 0, 0, 0]
+        self.reward = 0
+
     def runAction(self):
         if(self.actionOrder[0][2] > 0):
             k = self.actionOrder[0][2]
@@ -63,33 +67,67 @@ class HSR:
             self.actionOrder.append([self.charNames[i], "pending", self.team[i].actionValue])
         for i, enemy in enumerate(self.enemies[self.wave]):
             self.actionOrder.append([enemy, "pending", enemy.actionValue]) #NOT A STRING
+        self.lastHp[i] = enemy.hp
 
         self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
         self.runAction()
         
-    def charGoDo(self, char, action):
+    def charGoDo(self, char, action, target):
         getattr(self._characters[char], action)()
+
+    def enemyGoDo(self, enemy, action):
+        pass
+
+    def updateSignal(self):
+        pass
 
     def action(self, action):
         if(self.actionOrder[0][1] != "pending"):
             if(isinstance(self.actionOrder[0], str)):
-                self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1])
+                self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
+            else:
+                self.enemyGoDo(self.actionOrder[0][0], self.actionOrder[0][1])
             del self.actionOrder[0]
             self.runAction()
         else:
-            pass
+            if(isinstance(self.actionOrder[0], str)):
+                self.charGoDo(self.actionOrder[0][0], action["action"], action["target"])
+            else:
+                self.enemyGoDo(self.actionOrder[0][0], self.actionOrder[0][0].doAction())
+
+            self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].actionValue
+            for i in range(len(self.actionOrder) - 1):
+                if(self.actionOrder[i][2] >= self.actionOrder[i+1][2]):
+                    self.actionOrder[i], self.actionOrder[i+1] = self.actionOrder[i+1], self.actionOrder[i]
+                else:
+                    break
 
     def evaluate(self):
-        pass
+        for i in range(len(self.enemies[self.wave])):#300000
+            self.reward += (self.lastHp[i] - self.enemies[self.wave][i].hp)/300000
+            self.lastHp[i] = self.enemies[self.wave][i].hp
+
+        rwd = self.reward
+        self.reward = 0
+        return rwd
 
     def is_done(self):
-        pass
+        return self.wave >= len(self.enemies)
 
     def is_trunc(self):
-        pass
+        return False
 
     def observe(self):
-        pass
+        obs = {
+            "AllyUlts" : [],
+            "EnemyData" : []
+        }
+        for i in range(1, 5):
+            obs["AllyUlts"].append(self.team[i].checkUltimate())
+        for enemy in self.enemies[self.wave]:
+            obs["EnemyData"].append(enemy.hp/300000)
+            obs["EnemyData"].append(enemy.getWeakness())
+        return np.array(obs)
 
     def view(self):
         pass
