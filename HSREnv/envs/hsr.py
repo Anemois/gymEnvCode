@@ -72,14 +72,69 @@ class HSR:
         self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
         self.runAction()
         
-    def charGoDo(self, char, action, target):
-        getattr(self._characters[char], action)()
+    def doDamage(self, base, element, toughnessDamage, char, target):
+        target.toughness = max(0, target.toughness - toughnessDamage)
+
+        dmg = base * char.getDamage() * char.calcDefMultiplier(target.getDefence(char.getDefIgnore())) * \
+        target.getRES(element, char.getResPEN()) * target.getDamageReduction()
+
+        if(target.hp == 0):
+            return
+
+        dmg = round(dmg)
+        target.hp = max(0, target.hp - dmg)
+
+        if(target.hp == 0):
+            for i in range(4):
+                if(self.enemies[self.wave][i].hp == 0):
+                    self.enemies[self.wave][i], self.enemies[self.wave][i+1] = self.enemies[self.wave][i+1], self.enemies[self.wave][i]
+            self.reward += 0.1
+
+
+    def charGoDo(self, charName, action, targetIndex):
+        char = self._characters[charName]
+        getattr(char, action)()
+        data = char.getUpdate()
+        if(data == "NULL"):
+            return
+        
+        self.sendSignal(self, data["actionType"], data["char"])
+
+        if(data["hitType"] == "single"):
+            target = self.enemies[self.wave][targetIndex]
+            if(target.hp == 0):
+                target = 0
+            for i in range(data["hits"]):
+                self.doDamage(data["base"], data["element"], data["break"], char, target)
+
+        elif(data["hitType"] == "blast"):
+            targetWave = self.enemies[self.wave]
+            if(targetWave[targetIndex].hp == 0):
+                targetIndex = 0
+            
+            for i in range(data["hits"]):
+                if(targetIndex-1 >= 0):
+                    self.doDamage(data["base"][0], data["element"], data["break"][0], char, targetWave[targetIndex-1])
+                self.doDamage(data["base"][1], data["element"], data["break"][0], char, targetWave[targetIndex-1])
+                if(targetIndex+1 < 5):
+                    self.doDamage(data["base"][2], data["element"], data["break"][0], char, targetWave[targetIndex-1])
+
+        elif(data["hitType"] == "bounce"):
+            aliveEnemies = []
+            for i in range(5):
+                if(self.enemies[self.wave][i].hp > 0):
+                    aliveEnemies.append(i)
+
+            for i in range(data["hits"]):
+                target = random.choice(aliveEnemies)
+                self.doDamage(data["base"], data["element"], data["break"], char, self.enemies[self.wave][target])
 
     def enemyGoDo(self, enemy, action):
-        pass
+        getattr(enemy, action)()
 
-    def updateSignal(self):
-        pass
+    def sendSignal(self, actionType, actionChar):
+        for i in range(1, 5):
+            self.team[i].actionDetect(actionType, actionChar)
 
     def action(self, action):
         if(self.actionOrder[0][1] != "pending"):

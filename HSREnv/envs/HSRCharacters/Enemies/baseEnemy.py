@@ -11,6 +11,9 @@ class BaseEnemy():
         self.atkBuff = 1
         self.defBuff = 1
         self.dmgBuff = 1
+        self.atkDebuff = 1
+        self.defDebuff = 1
+        self.dmgDebuff = 1
         self.toughness = toughness
         self.maxToughness = toughness
         self.critDamageDebuff = 0
@@ -31,8 +34,8 @@ class BaseEnemy():
 
         self.updates = []
 
-    def getDefence(self):
-        return self.defence * self.defBuff
+    def getDefence(self, defIgnore = 0):
+        return max(0, self.defence * (self.defBuff - (self.defDebuff + defIgnore)))
 
     def getAttack(self):
         return self.atk * self.atkBuff
@@ -40,6 +43,12 @@ class BaseEnemy():
     def getSpeed(self):
         return 90 if self.singing else self.spd * self.speedBuff
     
+    def getRES(self, charType = [], resPEN = 0):
+        return 1 - ((0 if charType in self.weakness else 20) - resPEN)
+
+    def getDamageReduction(self):
+        return 0.9 if self.toughness > 0 else 1
+
     def getWeakness(self):
         return self.obsWeakness
 
