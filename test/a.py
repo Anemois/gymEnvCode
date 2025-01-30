@@ -1,16 +1,11 @@
-from mid.b import B
-class hi:
-    def __init__(self):
-        self.k = 1
-        ok = B()
-        ok.go()
-    
-    def cool(self):
-        print("HI")
-        self.k = 2
-    
-    def pp(self):
-        print(self.k)
-
-x = hi()
-x.pp()
+a = {}
+a["wa"] = 3
+a["wo"] = 3
+for i in a:
+    i = a[i]
+    print(i)
+del a["wa"]
+del a["wfawa"]
+for i in a:
+    i = a[i]
+    print(i)

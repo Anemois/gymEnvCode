@@ -18,6 +18,8 @@ class March7(AllyTemplate):
         self.shifuType = "none"
         self.followUpCharge = True
 
+        random.seed(datetime.now().timestamp())
+
     def addCharge(self, x):
         self.charge = min(10, self.charge + x)
 
@@ -40,7 +42,12 @@ class March7(AllyTemplate):
                 "base": self.getAttack() * 1,
                 "element": ["imaginary", self.shifuType],
                 "break": 10,
-                "effects": {"m7SwordPlay": 1}
+                "effects": [{"name": "m7SwordPlay",
+                             "type" : "dmgDebuff",
+                             "base" : 0.5,
+                             "turnCount" : 1,
+                             "deleteOthers" : True,
+                             "on/off" : "on"}]
             }
             self.actionSignal(actionData)  
             self.checkCharge()
@@ -66,7 +73,12 @@ class March7(AllyTemplate):
                 "base": self.getAttack() * 0.8,
                 "element": ["imaginary", self.shifuType],
                 "break": 5 * hits,
-                "effects": {"m7SwordPlay": 1}
+                "effects": [{"name": "m7SwordPlay",
+                             "type" : "dmgDebuff",
+                             "base" : 0.5,
+                             "turnCount" : 1,
+                             "deleteOthers" : True,
+                             "on/off" : "on"}]
             }
             if supercharge:
                 self.critDamage -= 0.5
@@ -88,7 +100,12 @@ class March7(AllyTemplate):
             "base": 0,
             "element": ["none"],
             "break": 0,
-            "effects": {"March7Skill": ["speedBuff", 0.1, 1, 1], "notSelf": 1}
+            "effects": [{"name": "m7SpeedBuff",
+                         "type" : "speedBuff",
+                         "base" : 0.1,
+                         "turnCount" : 100,
+                         "deleteOthers" : True,
+                         "on/off" : "on"}]
         }
         self.actionSignal(actionData)
 
@@ -106,7 +123,12 @@ class March7(AllyTemplate):
             "base": self.getAttack() * 2.4,
             "element": ["imaginary", self.shifuType],
             "break": 30,
-            "effects": {"m7SwordPlay": 1}
+            "effects": [{"name": "m7SwordPlay",
+                         "type" : "dmgDebuff",
+                         "base" : 0.14,
+                         "turnCount" : 1,
+                         "deleteOthers" : True,
+                         "on/off" : "on"}]
         }
         self.actionSignal(actionData)
 
@@ -123,7 +145,12 @@ class March7(AllyTemplate):
             "base": self.getAttack() * 0.6,
             "element": ["imaginary", self.shifuType],
             "break": 5,
-            "effects": {"m7SwordPlay": 1}
+            "effects": [{"name": "m7SwordPlay",
+                         "type" : "dmgDebuff",
+                         "base" : 0.14,
+                         "turnCount" : 1,
+                         "deleteOthers" : True,
+                         "on/off" : "on"}]
         }
         self.actionSignal(actionData)
         self.checkCharge()

@@ -14,6 +14,8 @@ class Adventurine(AllyTemplate):
         self.energyRegenRate = energyRegenRate
         self.blindBet = 0
 
+        random.seed(datetime.now().timestamp())
+
     def addBlindBet(self, x):
         self.blindBet = min(9, self.blindBet + x)
 
@@ -64,7 +66,12 @@ class Adventurine(AllyTemplate):
             "base": self.getDefence() * 2.7,
             "element": ["imaginary"],
             "break": 30,
-            "effects": {"critDamageDebuff": 0.15}
+            "effects": [{"name": "AdventurineUltimateDebuff",
+                             "type" : "critDamageDebuff",
+                             "base" : 0.15,
+                             "turnCount" : 3,
+                             "deleteOthers" : False,
+                             "on/off" : "on"}]
         }
         self.actionSignal(actionData)    
 
@@ -93,7 +100,3 @@ class Adventurine(AllyTemplate):
         if self.blindBet >= 7:
             self.blindBet -= 7
             self.addAction(["Adventurine", "talent", -1])
-
-a = Adventurine()
-a.ultimate()
-print(a.updates)
