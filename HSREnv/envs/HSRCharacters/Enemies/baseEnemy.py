@@ -67,6 +67,11 @@ class BaseEnemy():
                 critDamageDebuff += debuff["base"]
         return (self.critDamageDebuff + critDamageDebuff)
 
+    def getUpdate(self):
+        if(len(self.updates) == 0):
+            return "NULL"
+        return self.updates.pop(0)
+
     def calcActionValue(self):
         return 10000 / self.getSpeed()
 
@@ -91,7 +96,7 @@ class BaseEnemy():
             "target": "Ally",
             "hitType": "single",
             "hits": 1,
-            "base": self.getAttack() * 1,
+            "base": 5,
             "element": ["none"],
             "break": 0,
             "effects": {}
@@ -106,7 +111,7 @@ class BaseEnemy():
             "target": "Ally",
             "hitType": "blast",
             "hits": 1,
-            "base": [self.getAttack() * 0.3, self.getAttack() * 0.5, self.getAttack() * 0.3],
+            "base": [2, 4, 2],
             "element": ["none"],
             "break": 0,
             "effects": {}
