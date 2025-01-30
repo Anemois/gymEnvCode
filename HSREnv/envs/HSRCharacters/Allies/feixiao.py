@@ -15,6 +15,8 @@ class Feixiao(AllyTemplate):
 
         self.followUp = False
 
+        random.seed(datetime.now().timestamp())
+
     def basic(self):    
         self.followUp = True
         actionData = {

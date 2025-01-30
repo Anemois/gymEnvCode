@@ -4,6 +4,7 @@ from datetime import datetime
 class BaseEnemy():
     def __init__(self, hp=300000, atk=100, defence=200+10*90, spd=132, weakness = [], toughness = 20):
         self.buffs = []
+        self.debuffs = []
         self.hp = hp
         self.atk = atk
         self.defence = defence
@@ -25,7 +26,7 @@ class BaseEnemy():
         self.obsWeakness = []
         weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
         for i in range(7):
-                self.obsWeakness.append(1 if self.weakness in weaknesses else 0)
+            self.obsWeakness.append(1 if self.weakness in weaknesses else 0)
 
         self.moves = ["single", "blast"]
         self.moveptr = 0
@@ -51,6 +52,20 @@ class BaseEnemy():
 
     def getWeakness(self):
         return self.obsWeakness
+
+    def getCritRateDebuff(self):
+        critRateDebuff = 0
+        for debuff in self.debuffs:
+            if(debuff["type"] == "critRateDebuff"):
+                critRateDebuff += debuff["base"]
+        return (self.critRateDebuff + critRateDebuff)
+    
+    def getCritDamageDebuff(self):
+        critDamageDebuff = 0
+        for debuff in self.debuff:
+            if(debuff["type"] == "critDamageDebuff"):
+                critDamageDebuff += debuff["base"]
+        return (self.critDamageDebuff + critDamageDebuff)
 
     def addAction(self, dict):
         self.updates.append(["addAction", dict])

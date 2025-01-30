@@ -12,6 +12,8 @@ class Robin(AllyTemplate):
         self.energyRegenRate = energyRegenRate
         self.countdown = 0
         self.singing = False
+
+        random.seed(datetime.now().timestamp())
         
     def basic(self):
         self.countdown -= 1

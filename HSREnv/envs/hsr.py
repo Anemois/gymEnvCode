@@ -2,9 +2,13 @@ import HSREnv.envs.HSRCharacters as hsr
 import numpy as np
 import random
 import pygame
+from datetime import datetime
 
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+        
+        random.seed(datetime.now().timestamp())
+
         #init characters
         self._characters = {
             "Feixiao"     : hsr.Allies.Feixiao(hp=3311, atk=2603, defence=1331, spd=142, critRate=82.7, critDamage=2.4),
@@ -72,11 +76,16 @@ class HSR:
         self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
         self.runAction()
         
-    def doDamage(self, base, element, toughnessDamage, char, target):
+    def doDamage(self, base, element, toughnessDamage, effect, char, target):
         target.toughness = max(0, target.toughness - toughnessDamage)
+
+        target.debuff[effect["name"]] = effect["name"]
 
         dmg = base * char.getDamage() * char.calcDefMultiplier(target.getDefence(char.getDefIgnore())) * \
         target.getRES(element, char.getResPEN()) * target.getDamageReduction()
+
+        if(random.random() >= char.getCritRate() + target.getCritRateDebuff()):
+            dmg = dmg * (char.getCritDamage() + target.getCritDamageDebuff()) 
 
         if(target.hp == 0):
             return
@@ -90,7 +99,6 @@ class HSR:
                     self.enemies[self.wave][i], self.enemies[self.wave][i+1] = self.enemies[self.wave][i+1], self.enemies[self.wave][i]
             self.reward += 0.1
 
-
     def charGoDo(self, charName, action, targetIndex):
         char = self._characters[charName]
         getattr(char, action)()
@@ -100,37 +108,42 @@ class HSR:
         
         self.sendSignal(self, data["actionType"], data["char"])
 
-        if(data["hitType"] == "single"):
-            target = self.enemies[self.wave][targetIndex]
-            if(target.hp == 0):
-                target = 0
-            for i in range(data["hits"]):
-                self.doDamage(data["base"], data["element"], data["break"], char, target)
+        if(data["actionType"] == "atk"):
+            if(data["hitType"] == "single"):
+                target = self.enemies[self.wave][targetIndex]
+                if(target.hp == 0):
+                    target = 0
+                for i in range(data["hits"]):
+                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], char, target)
 
-        elif(data["hitType"] == "blast"):
-            targetWave = self.enemies[self.wave]
-            if(targetWave[targetIndex].hp == 0):
-                targetIndex = 0
-            
-            for i in range(data["hits"]):
-                if(targetIndex-1 >= 0):
-                    self.doDamage(data["base"][0], data["element"], data["break"][0], char, targetWave[targetIndex-1])
-                self.doDamage(data["base"][1], data["element"], data["break"][0], char, targetWave[targetIndex-1])
-                if(targetIndex+1 < 5):
-                    self.doDamage(data["base"][2], data["element"], data["break"][0], char, targetWave[targetIndex-1])
+            elif(data["hitType"] == "blast"):
+                targetWave = self.enemies[self.wave]
+                if(targetWave[targetIndex].hp == 0):
+                    targetIndex = 0
+                
+                for i in range(data["hits"]):
+                    if(targetIndex-1 >= 0):
+                        self.doDamage(data["base"][0], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
+                    self.doDamage(data["base"][1], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
+                    if(targetIndex+1 < 5):
+                        self.doDamage(data["base"][2], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
 
-        elif(data["hitType"] == "bounce"):
-            aliveEnemies = []
-            for i in range(5):
-                if(self.enemies[self.wave][i].hp > 0):
-                    aliveEnemies.append(i)
+            elif(data["hitType"] == "bounce"):
+                aliveEnemies = []
+                for i in range(5):
+                    if(self.enemies[self.wave][i].hp > 0):
+                        aliveEnemies.append(i)
 
-            for i in range(data["hits"]):
-                target = random.choice(aliveEnemies)
-                self.doDamage(data["base"], data["element"], data["break"], char, self.enemies[self.wave][target])
+                for i in range(data["hits"]):
+                    target = random.choice(aliveEnemies)
+                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], char, self.enemies[self.wave][target])
+        
+        elif(data["actionType"] == "buff"):
+            pass
 
     def enemyGoDo(self, enemy, action):
         getattr(enemy, action)()
+        
 
     def sendSignal(self, actionType, actionChar):
         for i in range(1, 5):

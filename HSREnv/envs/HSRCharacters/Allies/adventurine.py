@@ -14,6 +14,8 @@ class Adventurine(AllyTemplate):
         self.energyRegenRate = energyRegenRate
         self.blindBet = 0
 
+        random.seed(datetime.now().timestamp())
+
     def addBlindBet(self, x):
         self.blindBet = min(9, self.blindBet + x)
 

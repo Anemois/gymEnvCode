@@ -18,6 +18,8 @@ class March7(AllyTemplate):
         self.shifuType = "none"
         self.followUpCharge = True
 
+        random.seed(datetime.now().timestamp())
+
     def addCharge(self, x):
         self.charge = min(10, self.charge + x)
 
