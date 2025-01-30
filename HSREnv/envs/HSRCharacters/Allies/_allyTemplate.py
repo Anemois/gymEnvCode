@@ -35,59 +35,49 @@ class AllyTemplate():
     def checkUltimate(self):
         return self.energy >= self.energyCost
 
-    def getDefence(self):
-        defBuff = 0
+    def getBuff(self, buffName):
+        Buff = 0
         for buff in self.buffs:
-            if(buff["type"] == "defBuff"):
-                defBuff += buff["base"]
+            buff = self.buffs[buff]
+            if(buff["type"] == buffName and buff["on/off"] == "on"):
+                Buff += buff["base"]
+        return Buff
+
+    def getDefence(self):
+        defBuff = self.getBuff("defBuff")
         return self.defence * (self.defBuff + defBuff)
 
     def getAttack(self):
-        atkBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "atkBuff"):
-                atkBuff += buff["base"]
+        atkBuff = self.getBuff("atkBuff")
         return self.atk * (self.atkBuff + atkBuff)
 
     def getSpeed(self):
-        spdBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "spdBuff"):
-                spdBuff += buff["base"]
+        spdBuff = self.getBuff("spdBuff")
         return self.spd * (self.speedBuff + spdBuff)
     
     def getCritRate(self):
-        critRateBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "critRateBuff"):
-                critRateBuff += buff["base"]
+        critRateBuff = self.getBuff("critRateBuff")
         return (self.critRate + critRateBuff)
     
     def getCritDamage(self):
-        critDamageBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "critDamageBuff"):
-                critDamageBuff += buff["base"]
+        critDamageBuff = self.getBuff("critDamageBuff")
         return (self.critDamage + critDamageBuff)
 
     def getDefIgnore(self):
-        defIgnoreBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "defIgnoreBuff"):
-                defIgnoreBuff += buff["base"]
+        defIgnoreBuff = self.getBuff("defIgnoreBuff")
         return (self.defIgnore + defIgnoreBuff)
 
     def getResPEN(self):
-        resPENBuff = 0
-        for buff in self.buffs:
-            if(buff["type"] == "resPENBuff"):
-                resPENBuff += buff["base"]
+        resPENBuff = self.getBuff("resPENBuff")
         return (self.resPEN + resPENBuff)
 
     def getUpdate(self):
         if(len(self.updates) == 0):
             return "NULL"
         return self.updates.pop(0)
+
+    def calcActionValue(self):
+        return 10000 / self.getSpeed()
 
     def calcDefMultiplier(self, enemyDef):
         return 1 - (enemyDef / (enemyDef + 200 + 10 * self.lv))

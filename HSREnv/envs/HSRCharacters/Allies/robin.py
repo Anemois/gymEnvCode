@@ -15,8 +15,12 @@ class Robin(AllyTemplate):
 
         random.seed(datetime.now().timestamp())
         
+    def getSpeed(self):
+        return 90 if self.singing else self.spd * self.speedBuff
+
     def basic(self):
         self.countdown -= 1
+        self.singing = False
         if self.countdown <= 0:
             actionData = {
                 "char": "Robin",
@@ -33,6 +37,7 @@ class Robin(AllyTemplate):
                              "type" : "dmgBuff",
                              "base" : 0.5,
                              "turnCount" : 100,
+                             "deleteOthers" : False,
                              "on/off" : "off"}]}
 
             self.actionSignal(actionData)
@@ -55,6 +60,7 @@ class Robin(AllyTemplate):
     def skill(self):
         self.countdown = 3
         self.addEnergy(30)
+        self.singing = False
         actionData = {
             "char": "Robin",
             "action": "skill",
@@ -69,6 +75,7 @@ class Robin(AllyTemplate):
                           "type" : "dmgBuff",
                           "base" : 0.5,
                           "turnCount" : 100,
+                          "deleteOthers" : False,
                           "on/off" : "on"}]}
         self.actionSignal(actionData)
 
@@ -89,11 +96,13 @@ class Robin(AllyTemplate):
                           "type" : "atkBuff",
                           "base" : 0.3,
                           "turnCount" : 100,
+                          "deleteOthers" : False,
                           "on/off" : "on"},
                          {"name": "RobinUltAtk",
                           "type" : "followAtk",
                           "base" : self.getAttack() * 1.2,
                           "turnCount" : 1,
+                          "deleteOthers" : False,
                           "on/off" : "on"}]}
         self.actionSignal(actionData)
 
@@ -116,11 +125,13 @@ class Robin(AllyTemplate):
                           "type" : "atkBuff",
                           "base" : 0.3,
                           "turnCount" : 100,
+                          "deleteOthers" : False,
                           "on/off" : "off"},
                          {"name": "RobinUltAtk",
                           "type" : "followAtk",
                           "base" : self.getAttack() * 1.2,
                           "turnCount" : 1,
+                          "deleteOthers" : False,
                           "on/off" : "off"}]}
             self.actionSignal(actionData)
 
@@ -139,10 +150,12 @@ class Robin(AllyTemplate):
                              "type" : "critDamageBuff",
                              "base" : 0.2,
                              "turnCount" : 100,
+                             "deleteOthers" : False,
                              "on/off" : "on"},
                             {"name": "RobinE1",
                              "type" : "resPENBuff",
                              "base" : 0.24,
                              "turnCount" : 1,
+                             "deleteOthers" : False,
                              "on/off" : "on"}]}
             self.actionSignal(actionData)

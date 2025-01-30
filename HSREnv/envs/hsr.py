@@ -76,10 +76,24 @@ class HSR:
         self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
         self.runAction()
         
+    def debuffEnemy(self, effect, target):
+        if(effect["deleteOthers"] == True):
+            for enemy in self.enemies[self.wave]:
+                enemy.debuffs.pop(effect["name"], None)
+
+        target.debuff[effect["name"]] = effect
+
+    def buffAlly(self, effect, target):
+        if(effect["deleteOthers"] == True):
+            for ally in self.team:
+                ally.buffs.pop(effect["name"], None)
+
+        target.buff[effect["name"]] = effect
+
     def doDamage(self, base, element, toughnessDamage, effect, char, target):
         target.toughness = max(0, target.toughness - toughnessDamage)
 
-        target.debuff[effect["name"]] = effect["name"]
+        self.debuffEnemy(effect, target)
 
         dmg = base * char.getDamage() * char.calcDefMultiplier(target.getDefence(char.getDefIgnore())) * \
         target.getRES(element, char.getResPEN()) * target.getDamageReduction()
@@ -108,7 +122,7 @@ class HSR:
         
         self.sendSignal(self, data["actionType"], data["char"])
 
-        if(data["actionType"] == "atk"):
+        if(data["target"] == "Enemy"):
             if(data["hitType"] == "single"):
                 target = self.enemies[self.wave][targetIndex]
                 if(target.hp == 0):
@@ -125,7 +139,7 @@ class HSR:
                     if(targetIndex-1 >= 0):
                         self.doDamage(data["base"][0], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
                     self.doDamage(data["base"][1], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
-                    if(targetIndex+1 < 5):
+                    if(targetIndex+1 <= 4):
                         self.doDamage(data["base"][2], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
 
             elif(data["hitType"] == "bounce"):
@@ -138,19 +152,33 @@ class HSR:
                     target = random.choice(aliveEnemies)
                     self.doDamage(data["base"], data["element"], data["break"], data["effect"], char, self.enemies[self.wave][target])
         
-        elif(data["actionType"] == "buff"):
-            pass
+        elif(data["target"] == "Ally"):
+            targetIndex = max(1, targetIndex)
+            if(data["hitType"] == "single"):           
+                self.buffAlly(self.team[targetIndex])
+            elif(data["hitType"] == "blast"):
+                if(targetIndex-1 >= 1):
+                    self.buffAlly(self.team[targetIndex-1])
+                self.buffAlly(self.team[targetIndex])
+                if(targetIndex+1 <= 4):
+                    self.buffAlly(self.team[targetIndex+1])
+            elif(data["hitType"] == "all"):
+                for i in range(1, 5):
+                    self.buffAlly(self.team[i])
 
     def enemyGoDo(self, enemy, action):
         getattr(enemy, action)()
-        
+        pass
 
     def sendSignal(self, actionType, actionChar):
         for i in range(1, 5):
             self.team[i].actionDetect(actionType, actionChar)
 
     def action(self, action):
-        if(self.actionOrder[0][1] != "pending"):
+        if("ultimate" in action["action"]):
+            self.charGoDo(action["action"][8:], "ultimate", action["target"])
+            self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].calcActionValue()
+        elif(self.actionOrder[0][1] != "pending"):
             if(isinstance(self.actionOrder[0], str)):
                 self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
             else:
@@ -160,10 +188,11 @@ class HSR:
         else:
             if(isinstance(self.actionOrder[0], str)):
                 self.charGoDo(self.actionOrder[0][0], action["action"], action["target"])
+                self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].calcActionValue()
             else:
                 self.enemyGoDo(self.actionOrder[0][0], self.actionOrder[0][0].doAction())
-
-            self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].actionValue
+                self.actionOrder[0][2] = self.actionOrder[0].calcActionValue()
+            
             for i in range(len(self.actionOrder) - 1):
                 if(self.actionOrder[i][2] >= self.actionOrder[i+1][2]):
                     self.actionOrder[i], self.actionOrder[i+1] = self.actionOrder[i+1], self.actionOrder[i]

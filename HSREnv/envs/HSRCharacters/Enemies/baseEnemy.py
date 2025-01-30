@@ -67,6 +67,9 @@ class BaseEnemy():
                 critDamageDebuff += debuff["base"]
         return (self.critDamageDebuff + critDamageDebuff)
 
+    def calcActionValue(self):
+        return 10000 / self.getSpeed()
+
     def addAction(self, dict):
         self.updates.append(["addAction", dict])
     
