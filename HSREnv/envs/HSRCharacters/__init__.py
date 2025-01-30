@@ -1,2 +1,2 @@
-import Allies
-import Enemies
+import HSREnv.envs.HSRCharacters.Allies
+import HSREnv.envs.HSRCharacters.Enemies
