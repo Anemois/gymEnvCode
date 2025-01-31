@@ -65,7 +65,7 @@ class March7(AllyTemplate):
                 self.critDamage += 0.5
             actionData = {
                 "char": "March7",
-                "action": "basic",
+                "action": "enchancedBasic",
                 "actionType": "atk",
                 "target": "Enemy",
                 "hitType": "single",

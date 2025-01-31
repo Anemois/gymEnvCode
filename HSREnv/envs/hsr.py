@@ -2,12 +2,23 @@ import HSREnv.envs.HSRCharacters as hsr
 import numpy as np
 import random
 import pygame
+import sys
 from datetime import datetime
 
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
-        
+        #init import
         random.seed(datetime.now().timestamp())
+
+        pygame.init()
+        self.fps = 60
+        self.fpsClock = pygame.time.Clock()
+        
+        self.width, self.height = 1500, 880
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption('image')
+        self.pygameImages = {}
+        self.initPygameImages()
 
         #init characters
         self._characters = {
@@ -119,6 +130,7 @@ class HSR:
 
     def charGoDo(self, charName, action, targetIndex):
         char = self._characters[charName]
+        
         getattr(char, action)()
         data = char.getUpdate()
         if(data == "NULL"):
@@ -259,5 +271,39 @@ class HSR:
             obs["EnemyData"].append(enemy.getWeakness())
         return np.array(obs)
 
+    def _initPygameImages(self):
+        self.pygameImages["HSRTitleScreen"] = pygame.image.load("assets/HSRTitleScreen.png").convert()
+        self.pygameImages["Feixiaopending"] = pygame.image.load("assets/FeixiaoPending.png").convert()
+        self.pygameImages["Feixiaobasic"] = pygame.image.load("assets/FeixiaoBasic.png").convert()
+        self.pygameImages["Feixiaoskill"] = pygame.image.load("assets/FeixiaoSkill.png").convert()
+        self.pygameImages["Feixiaotalent"] = pygame.image.load("assets/FeixiaoTalent.png").convert()
+        self.pygameImages["Feixiaoultimate"] = pygame.image.load("assets/FeixiaoUltimate.png").convert()
+
+        self.pygameImages["Robinpending"] = pygame.image.load("assets/RobinPending.png").convert()
+        self.pygameImages["Robinbasic"] = pygame.image.load("assets/RobinBasic.png").convert()
+        self.pygameImages["Robinskill"] = pygame.image.load("assets/RobinSkill.png").convert()
+        self.pygameImages["Robintalent"] = pygame.image.load("assets/RobinPending.png").convert()
+        self.pygameImages["Robinultimate"] = pygame.image.load("assets/RobinUltimate.png").convert()
+
+        self.pygameImages["Adventurinepending"] = pygame.image.load("assets/AdventurinePending.png").convert()
+        self.pygameImages["Adventurinebasic"] = pygame.image.load("assets/AdventurineBasic.png").convert()
+        self.pygameImages["Adventurineskill"] = pygame.image.load("assets/AdventurineSkill.png").convert()
+        self.pygameImages["Adventurinetalent"] = pygame.image.load("assets/AdventurineTalent.png").convert()
+        self.pygameImages["Adventurineultimate"] = pygame.image.load("assets/AdventurineUltimate.png").convert()
+
+        self.pygameImages["March7pending"] = pygame.image.load("assets/March7Pending.png").convert()
+        self.pygameImages["March7basic"] = pygame.image.load("assets/March7Basic.png").convert()
+        self.pygameImages["March7enchancedBasic"] = pygame.image.load("assets/March7Basic.png").convert()
+        self.pygameImages["March7skill"] = pygame.image.load("assets/March7Skill.png").convert()
+        self.pygameImages["March7talent"] = pygame.image.load("assets/March7Basic.png").convert()
+        self.pygameImages["March7ultimate"] = pygame.image.load("assets/March7Ultimate.png").convert()
+
     def view(self):
-        pass
+        self.screen.fill((0,0,0))
+        self.screen.blit(self.pygameImages["HSRTitleScreen"])
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit() # Opposite of pygame.init
+                sys.exit()
