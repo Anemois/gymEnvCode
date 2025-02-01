@@ -1,36 +1,37 @@
-import HSREnv.envs.HSRCharacters as hsr
+from HSREnv.envs.HSRCharacters.Allies import *
+from HSREnv.envs.HSRCharacters.Enemies import *
 import numpy as np
 import random
 import pygame
 import sys
+import os
 from datetime import datetime
 
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
-        #init import
-        random.seed(datetime.now().timestamp())
+        random.seed(datetime.now().timestamp())        
+        self.reward = 0
 
-        pygame.init()
-        self.fps = 60
-        self.fpsClock = pygame.time.Clock()
-        
-        self.width, self.height = 1500, 880
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption('image')
-        self.pygameImages = {}
-        self.initPygameImages()
+        self._initChars(charNames)
+        self._initEnemies(enemyData)
+        self._initActionOrder()
 
-        #init characters
+        self._initPygame()
+
+    def _initChars(self, charNames):
         self._characters = {
-            "Feixiao"     : hsr.Allies.Feixiao(hp=3311, atk=2603, defence=1331, spd=142, critRate=82.7, critDamage=2.4),
-            "Adventurine" : hsr.Allies.Adventurine(hp=3098, atk=1441, defence=3976, spd=113, critRate=0.435, critDamage=1.895),
-            "Robin"       : hsr.Allies.Robin(hp=4313, atk=3864, defence=986, spd=115, critRate=0.079, critDamage=1.733),
-            "March7"      : hsr.Allies.March7(hp=2864, atk=3222, defence=908, spd=115, critRate=0.716, critDamage=2.349)
+            "Feixiao"     : Feixiao(hp=3311, atk=2603, defence=1331, spd=142, critRate=82.7, critDamage=2.4),
+            "Adventurine" : Adventurine(hp=3098, atk=1441, defence=3976, spd=113, critRate=0.435, critDamage=1.895),
+            "Robin"       : Robin(hp=4313, atk=3864, defence=986, spd=115, critRate=0.079, critDamage=1.733),
+            "March7"      : March7(hp=2864, atk=3222, defence=908, spd=115, critRate=0.716, critDamage=2.349)
         }
-        self.charNames = ["BLANK"] + charNames
+        self.charNames = charNames
+        self.charNames.insert(0, "BLANK")
         
-        for charName in charNames:
+        for charName in self.charNames:
             try:
+                if(charName == "BLANK"):
+                    continue
                 self._characters[charName]
             except KeyError:
                 print("Character Name Initialization Error\nPlease Give Valid Character Names")
@@ -38,7 +39,10 @@ class HSR:
         self.team = ["BLANK", self._characters[charNames[1]], self._characters[charNames[2]], 
                      self._characters[charNames[3]], self._characters[charNames[4]]]
         
-        #init enemies
+        self.lastTarget = 0
+        self.lastHp = [0, 0, 0, 0, 0]
+
+    def _initEnemies(self, enemyData):
         self.wave = 0
         self.enemies = []
         weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
@@ -47,16 +51,16 @@ class HSR:
             try:
                 for j in range(enemyData["basicEnemy"]):
                     if(enemyData["basicData"][j] == "random"):
-                        thisWave.append(hsr.Enemies.BaseEnemy(hp = 50000, atk = 100, spd = random.choice([80, 100, 120]), toughness = random.choice([10, 20]), weakness = random.sample(weaknesses, random.randint(2,3))))
+                        thisWave.append(BaseEnemy(name = "basic", hp = 50000, atk = 100, spd = random.choice([80, 100, 120]), toughness = random.choice([10, 20]), weakness = random.sample(weaknesses, random.randint(2,3))))
                     else:
-                        thisWave.append(hsr.Enemies.BaseEnemy(hp = enemyData[j]["hp"], atk = enemyData[j]["atk"], spd = enemyData[j]["spd"], toughness = enemyData[j]["toughness"], weakness = enemyData[j]["weakness"]))
+                        thisWave.append(BaseEnemy(name = enemyData[j]["name"], hp = enemyData[j]["hp"], atk = enemyData[j]["atk"], spd = enemyData[j]["spd"], toughness = enemyData[j]["toughness"], weakness = enemyData[j]["weakness"]))
 
-                for j in range(enemyData["basicEnemy"]):
-                    if(enemyData["basicData"][j] == "random"):
+                for j in range(enemyData["eliteEnemy"]):
+                    if(enemyData["eliteData"][j] == "random"):
                         weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
-                        thisWave.append(hsr.Enemies.BaseEnemy(hp = 300000, atk = 100, spd = random.choice([100, 132, 150]), toughness = random.choice([100]), weakness = random.sample(weaknesses, random.randint(2,3))))
+                        thisWave.append(BaseEnemy(name = "elite", hp = 300000, atk = 100, spd = random.choice([100, 132, 150]), toughness = random.choice([100]), weakness = random.sample(weaknesses, random.randint(2,3))))
                     else:
-                        thisWave.append(hsr.Enemies.BaseEnemy(hp = enemyData[j]["hp"], atk = enemyData[j]["atk"], spd = enemyData[j]["spd"], toughness = enemyData[j]["toughness"], weakness = enemyData[j]["weakness"]))
+                        thisWave.append(BaseEnemy(name = enemyData[j]["name"], hp = enemyData[j]["hp"], atk = enemyData[j]["atk"], spd = enemyData[j]["spd"], toughness = enemyData[j]["toughness"], weakness = enemyData[j]["weakness"]))
             except IndexError:
                 print("Enemy number and enemy type is ot lined up, check it please :)")
 
@@ -64,16 +68,10 @@ class HSR:
 
             self.enemies.append(thisWave)
 
-        self._initActionOrder()
-
-        self.lastTarget = 0
-        self.lastHp = [0, 0, 0, 0, 0]
-        self.reward = 0
-
     def runAction(self):
         if(self.actionOrder[0][2] > 0):
             k = self.actionOrder[0][2]
-            for i in len(self.actionOrder):
+            for i in range(len(self.actionOrder)):
                 self.actionOrder[i][2] -= k 
 
     def _initActionOrder(self):
@@ -82,7 +80,7 @@ class HSR:
             self.actionOrder.append([self.charNames[i], "pending", self.team[i].actionValue])
         for i, enemy in enumerate(self.enemies[self.wave]):
             self.actionOrder.append([enemy, "pending", enemy.actionValue]) #NOT A STRING
-        self.lastHp[i] = enemy.hp
+            self.lastHp[i] = enemy.hp
 
         self.actionOrder = sorted(self.actionOrder, key=lambda t: t[2])
         self.runAction()
@@ -271,39 +269,120 @@ class HSR:
             obs["EnemyData"].append(enemy.getWeakness())
         return np.array(obs)
 
-    def _initPygameImages(self):
-        self.pygameImages["HSRTitleScreen"] = pygame.image.load("assets/HSRTitleScreen.png").convert()
-        self.pygameImages["Feixiaopending"] = pygame.image.load("assets/FeixiaoPending.png").convert()
-        self.pygameImages["Feixiaobasic"] = pygame.image.load("assets/FeixiaoBasic.png").convert()
-        self.pygameImages["Feixiaoskill"] = pygame.image.load("assets/FeixiaoSkill.png").convert()
-        self.pygameImages["Feixiaotalent"] = pygame.image.load("assets/FeixiaoTalent.png").convert()
-        self.pygameImages["Feixiaoultimate"] = pygame.image.load("assets/FeixiaoUltimate.png").convert()
+    def _initPygame(self):
+        pygame.init()
 
-        self.pygameImages["Robinpending"] = pygame.image.load("assets/RobinPending.png").convert()
-        self.pygameImages["Robinbasic"] = pygame.image.load("assets/RobinBasic.png").convert()
-        self.pygameImages["Robinskill"] = pygame.image.load("assets/RobinSkill.png").convert()
-        self.pygameImages["Robintalent"] = pygame.image.load("assets/RobinPending.png").convert()
-        self.pygameImages["Robinultimate"] = pygame.image.load("assets/RobinUltimate.png").convert()
+        self.INF = 1000000000
+        self.fps = 60
+        self.fpsClock = pygame.time.Clock()
+        self.deltaTime = 0
 
-        self.pygameImages["Adventurinepending"] = pygame.image.load("assets/AdventurinePending.png").convert()
-        self.pygameImages["Adventurinebasic"] = pygame.image.load("assets/AdventurineBasic.png").convert()
-        self.pygameImages["Adventurineskill"] = pygame.image.load("assets/AdventurineSkill.png").convert()
-        self.pygameImages["Adventurinetalent"] = pygame.image.load("assets/AdventurineTalent.png").convert()
-        self.pygameImages["Adventurineultimate"] = pygame.image.load("assets/AdventurineUltimate.png").convert()
+        self.lockPos = (-100, -100)
+        
+        self.screenWidth, self.screenHeight = 1000, 587
+        self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight))
+        pygame.display.set_caption('image')
+        self.pygameImages = {}
 
-        self.pygameImages["March7pending"] = pygame.image.load("assets/March7Pending.png").convert()
-        self.pygameImages["March7basic"] = pygame.image.load("assets/March7Basic.png").convert()
-        self.pygameImages["March7enchancedBasic"] = pygame.image.load("assets/March7Basic.png").convert()
-        self.pygameImages["March7skill"] = pygame.image.load("assets/March7Skill.png").convert()
-        self.pygameImages["March7talent"] = pygame.image.load("assets/March7Basic.png").convert()
-        self.pygameImages["March7ultimate"] = pygame.image.load("assets/March7Ultimate.png").convert()
+        self.charImagePos = [(0, 0), (10, 317), (190, 317), (370, 317), (550, 317)]
+        self.charImage = {
+            self.charNames[1] : {"action" : "pending", "to" : self.INF},
+            self.charNames[2] : {"action" : "pending", "to" : self.INF},
+            self.charNames[3] : {"action" : "pending", "to" : self.INF},
+            self.charNames[4] : {"action" : "pending", "to" : self.INF}
+        }
+        self.allImages = []
+        cwd = os.getcwd()        
+        directory = os.fsencode(cwd + "\\HSREnv\\envs\\assets")
+    
+        for file in os.listdir(directory):
+            filename = os.fsdecode(file)
+            if filename.endswith(".png") or filename.endswith(".jpg"): 
+                flname = filename[:-4]
+                self.pygameImages[flname] = pygame.image.load(directory.decode() + "\\" + filename).convert()
+                #print(flname[:3])
+                if(flname[:3] == "HSR"):
+                    self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (self.screenWidth, self.screenHeight))
+                elif(flname[:5] == "Enemy"):
+                    if("basic" in flname):
+                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (150, 150))
+                    else:
+                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 200))
+                elif(flname == "Lock"):
+                    self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
+                else:
+                    self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 250))
+            else:
+                continue
 
-    def view(self):
-        self.screen.fill((0,0,0))
-        self.screen.blit(self.pygameImages["HSRTitleScreen"])
+    def _checkImageAction(self, char):
+        if(pygame.time.get_ticks() > self.charImage[char]["to"]):
+            self.charImage[char]["to"] = self.INF
+            self.charImage[char]["action"] = "pending"
 
+    def addImage(self, img, pos, index, name, layer):
+        self.allImages.append({"img" : img,
+                               "pos" : pos,
+                               "index" : index, 
+                               "name" : name,
+                               "layer" : layer})
+    
+    def _updateImages(self):
+        self.allImages = sorted(self.allImages, key=lambda x: x["layer"])
+        for data in self.allImages:
+            self.screen.blit(data["img"], data["pos"])
 
+    def view(self, mode):
+        target = 0
+        action = "BLANK"
+        imageRects = []
+        for img in self.allImages:
+            imageRects.append({"rect" : img["img"].get_rect(topleft=img["pos"]),
+                               "pos" : img["pos"],
+                               "index" : img["index"], 
+                               "name" : img["name"]})
+        self.allImages = []
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if(event.type == pygame.QUIT):
                 pygame.quit() # Opposite of pygame.init
                 sys.exit()
+            if(event.type == pygame.MOUSEBUTTONDOWN and mode == "human"):
+                x, y = event.pos
+                for data in imageRects:
+                    if(data["rect"].collidepoint(x, y)):
+                        if("Enemy" in data["name"]):
+                            target = data["index"]
+                            self.lockPos = (data["pos"][0]+data["rect"].width//2 - 10, data["pos"][1] - 20)
+                        elif("Energy" in data["name"]):
+                            pass
+                        elif("Basic" in data["name"]):
+                            pass
+                        elif("Skill" in data["name"]):
+                            pass
+
+        self.screen.fill((0,0,0))
+        self.addImage(self.pygameImages["HSR_title_screen"], (0, 0), 0, "HSRTitleScreen", 0)
+        #Ally Images
+        for i in range(1, 5):
+            char = self.charNames[i]
+            self._checkImageAction(char)
+            #print(f"{char}_{self.charImage[char]['action']}")
+            name = f"{char}_{self.charImage[char]['action']}"
+            self.addImage(self.pygameImages[name], self.charImagePos[i], i, name, 1)
+        #Enemy Images
+        enmCount = 0
+        for enm in self.enemies[self.wave]:
+            if(enm.hp > 0):
+                enmCount += 1
+        
+        for i in range(enmCount):
+            enmName = self.enemies[self.wave][i].name
+            img = self.pygameImages[f"Enemy_{enmName}"]
+            pos = (20 + self.screenWidth//(enmCount)*(i) - (10 if enmName == "elite" else 0), 40)
+            self.addImage(img, pos, i, f"Enemy_{enmName}", 1)
+        #Lock Image
+        self.addImage(self.pygameImages["Lock"], self.lockPos, target, "Lock", 3)
+
+        self._updateImages()
+        pygame.display.update()
+        self.deltaTime = self.fpsClock.tick(60)

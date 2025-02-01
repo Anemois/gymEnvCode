@@ -6,7 +6,7 @@ from HSREnv.envs.hsr import HSR
 class Environment(gymnasium.Env):
     metadata = {"render_modes": ["human", "machine"], 'render_fps': 4}
     def __init__(self):
-        self.game = HSR
+        self.game = HSR()
         self.action_space = spaces.Box()
         self.observation_space = spaces.Box()
     
