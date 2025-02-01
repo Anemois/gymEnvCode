@@ -221,6 +221,8 @@ class HSR:
         if("ultimate" in action["action"]):
             self.charGoDo(action["action"][8:], "ultimate", action["target"])
             self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].calcActionValue()
+            print("YOOO")
+
         elif(self.actionOrder[0][1] != "pending"):
             if(isinstance(self.actionOrder[0], str)):
                 self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
@@ -285,6 +287,10 @@ class HSR:
         self.pygameImages = {}
 
         self.charImagePos = [(0, 0), (10, 317), (190, 317), (370, 317), (550, 317)]
+        self.charImageEnergyPos = [(0, 0)]
+        for i in range(1, 5):
+            self.charImageEnergyPos.append((self.charImagePos[i][0] + 90, self.charImagePos[i][1] + 170))
+
         self.charImage = {
             self.charNames[1] : {"action" : "pending", "to" : self.INF},
             self.charNames[2] : {"action" : "pending", "to" : self.INF},
@@ -310,7 +316,9 @@ class HSR:
                         self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 200))
                 elif(flname == "Lock"):
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
-                else:
+                elif("energy" in flname):
+                    self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (80, 80))
+                else:#char
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 250))
             else:
                 continue
@@ -334,7 +342,7 @@ class HSR:
 
     def view(self, mode):
         target = 0
-        action = "BLANK"
+        action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
             imageRects.append({"rect" : img["img"].get_rect(topleft=img["pos"]),
@@ -354,7 +362,7 @@ class HSR:
                             target = data["index"]
                             self.lockPos = (data["pos"][0]+data["rect"].width//2 - 10, data["pos"][1] - 20)
                         elif("Energy" in data["name"]):
-                            pass
+                            action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : target}
                         elif("Basic" in data["name"]):
                             pass
                         elif("Skill" in data["name"]):
@@ -368,7 +376,9 @@ class HSR:
             self._checkImageAction(char)
             #print(f"{char}_{self.charImage[char]['action']}")
             name = f"{char}_{self.charImage[char]['action']}"
+            energyName = f"{char}_energy_{'' if self._characters[char].checkUltimate() else 'not'}ready"
             self.addImage(self.pygameImages[name], self.charImagePos[i], i, name, 1)
+            self.addImage(self.pygameImages[energyName], self.charImageEnergyPos[i], i, energyName, 2)
         #Enemy Images
         enmCount = 0
         for enm in self.enemies[self.wave]:
