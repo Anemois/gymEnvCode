@@ -8,6 +8,7 @@ class Adventurine(AllyTemplate):
 
         self.critRate = critRate + min(max(0, (self.getDefence() - 1600) // 100 * 0.02), 0.48)
 
+        self.name = "Adventurine"
         self.energy = 0
         self.energyCost = 110
         self.energyMax = 110
@@ -70,6 +71,8 @@ class Adventurine(AllyTemplate):
                              "type" : "critDamageDebuff",
                              "base" : 0.15,
                              "turnCount" : 3,
+                             "maxStack" : 1,
+                             "stack" : 1,
                              "deleteOthers" : False,
                              "on/off" : "on"}]
         }

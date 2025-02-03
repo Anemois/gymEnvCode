@@ -8,6 +8,7 @@ class Feixiao(AllyTemplate):
 
         self.dmgBuff = 1.6
 
+        self.name = "Feixiao"
         self.energy = 3
         self.energyCost = 6
         self.energyMax = 13
@@ -37,7 +38,7 @@ class Feixiao(AllyTemplate):
         self.followUp = True
         actionData = {
             "char": "Feixiao",
-            "action": "basic",
+            "action": "skill",
             "actionType": "atk",
             "target": "Enemy",
             "hitType": "single",
@@ -55,7 +56,7 @@ class Feixiao(AllyTemplate):
         self.addEnergy(5)
         actionData = {
             "char": "Feixiao",
-            "action": "basic",
+            "action": "ultimate",
             "actionType": "atk",
             "target": "Enemy",
             "hitType": "single",
@@ -70,7 +71,7 @@ class Feixiao(AllyTemplate):
     def talent(self):
         actionData = {
             "char": "Feixiao",
-            "action": "basic",
+            "action": "talent",
             "actionType": "atk",
             "target": "Enemy",
             "hitType": "single",

@@ -47,6 +47,10 @@ class AllyTemplate():
         defBuff = self.getBuff("defBuff")
         return self.defence * (self.defBuff + defBuff)
 
+    def getDamage(self):
+        dmgBuff = self.getBuff("dmgBuff")
+        return (self.dmgBuff + dmgBuff)
+
     def getAttack(self):
         atkBuff = self.getBuff("atkBuff")
         return self.atk * (self.atkBuff + atkBuff)
@@ -74,13 +78,17 @@ class AllyTemplate():
     def getUpdate(self):
         if(len(self.updates) == 0):
             return "NULL"
-        return self.updates.pop(0)
+        else:
+            return self.updates.pop(0)
 
     def calcActionValue(self):
         return 10000 / self.getSpeed()
 
     def calcDefMultiplier(self, enemyDef):
         return 1 - (enemyDef / (enemyDef + 200 + 10 * self.lv))
+
+    def addBuffStack(self, effect):
+        self.buffs[effect]["stack"] = min(self.buffs[effect]["stack"]+1, self.buffs[effect]["maxStack"])
 
     def addAction(self, dict):
         self.updates.append(["addAction", dict])

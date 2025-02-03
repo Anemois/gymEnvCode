@@ -6,6 +6,7 @@ class March7(AllyTemplate):
     def __init__(self, hp= 2864, atk= 3222, defence= 908, spd= 115, critRate= 0.716, critDamage= 2.349, energyRegenRate= 1):
         super().__init__(hp, atk, defence, spd, critRate, critDamage)
 
+        self.name = "March7"
         self.energy = 0
         self.energyCost = 110
         self.energyMax = 110
@@ -46,6 +47,8 @@ class March7(AllyTemplate):
                              "type" : "dmgDebuff",
                              "base" : 0.5,
                              "turnCount" : 1,
+                             "maxStack" : 5,
+                             "stack" : 1,
                              "deleteOthers" : True,
                              "on/off" : "on"}]
             }
@@ -77,6 +80,8 @@ class March7(AllyTemplate):
                              "type" : "dmgDebuff",
                              "base" : 0.5,
                              "turnCount" : 1,
+                             "maxStack" : 5,
+                             "stack" : 1,
                              "deleteOthers" : True,
                              "on/off" : "on"}]
             }
@@ -104,6 +109,8 @@ class March7(AllyTemplate):
                          "type" : "speedBuff",
                          "base" : 0.1,
                          "turnCount" : 100,
+                         "maxStack" : 1,
+                         "stack" : 1,
                          "deleteOthers" : True,
                          "on/off" : "on"}]
         }
@@ -127,6 +134,8 @@ class March7(AllyTemplate):
                          "type" : "dmgDebuff",
                          "base" : 0.14,
                          "turnCount" : 1,
+                         "maxStack" : 5,
+                         "stack" : 1,
                          "deleteOthers" : True,
                          "on/off" : "on"}]
         }
@@ -149,6 +158,8 @@ class March7(AllyTemplate):
                          "type" : "dmgDebuff",
                          "base" : 0.14,
                          "turnCount" : 1,
+                         "maxStack" : 5,
+                         "stack" : 1,
                          "deleteOthers" : True,
                          "on/off" : "on"}]
         }

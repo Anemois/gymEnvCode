@@ -6,6 +6,7 @@ class Robin(AllyTemplate):
     def __init__(self, hp= 4313, atk= 3864, defence= 986, spd= 115, critRate= 0.079, critDamage= 1.733, energyRegenRate= 1.19):
         super().__init__(hp, atk, defence, spd, critRate, critDamage)
 
+        self.name = "Robin"
         self.energy = 0
         self.energyCost = 160
         self.energyMax = 160
@@ -37,6 +38,8 @@ class Robin(AllyTemplate):
                              "type" : "dmgBuff",
                              "base" : 0.5,
                              "turnCount" : 100,
+                             "maxStack" : 1,
+                             "stack" : 1,
                              "deleteOthers" : False,
                              "on/off" : "off"}]}
 
@@ -75,6 +78,8 @@ class Robin(AllyTemplate):
                           "type" : "dmgBuff",
                           "base" : 0.5,
                           "turnCount" : 100,
+                          "maxStack" : 1,
+                          "stack" : 1,
                           "deleteOthers" : False,
                           "on/off" : "on"}]}
         self.actionSignal(actionData)
@@ -96,19 +101,23 @@ class Robin(AllyTemplate):
                           "type" : "atkBuff",
                           "base" : 0.3,
                           "turnCount" : 100,
+                          "maxStack" : 1,
+                          "stack" : 1,
                           "deleteOthers" : False,
                           "on/off" : "on"},
                          {"name": "RobinUltAtk",
                           "type" : "followAtk",
                           "base" : self.getAttack() * 1.2,
                           "turnCount" : 1,
+                          "maxStack" : 1,
+                          "stack" : 1,
                           "deleteOthers" : False,
                           "on/off" : "on"}]}
         self.actionSignal(actionData)
 
     def actionDetect(self, actionType, actionChar):
         if actionType == "atk":
-            self.addCharge(2)
+            self.addEnergy(2)
 
         if actionType == "robinUltDown":
             actionData = {
@@ -122,17 +131,21 @@ class Robin(AllyTemplate):
                 "element": ["none"],
                 "break": 0,
                 "effects": [{"name": "RobinUltBuff",
-                          "type" : "atkBuff",
-                          "base" : 0.3,
-                          "turnCount" : 100,
-                          "deleteOthers" : False,
-                          "on/off" : "off"},
-                         {"name": "RobinUltAtk",
-                          "type" : "followAtk",
-                          "base" : self.getAttack() * 1.2,
-                          "turnCount" : 1,
-                          "deleteOthers" : False,
-                          "on/off" : "off"}]}
+                             "type" : "atkBuff",
+                             "base" : 0.3,
+                             "turnCount" : 100,
+                             "maxStack" : 1,
+                             "stack" : 1,
+                             "deleteOthers" : False,
+                             "on/off" : "on"},
+                            {"name": "RobinUltAtk",
+                             "type" : "followAtk",
+                             "base" : self.getAttack() * 1.2,
+                             "turnCount" : 1,
+                             "maxStack" : 1,
+                             "stack" : 1,
+                             "deleteOthers" : False,
+                             "on/off" : "on"}]}
             self.actionSignal(actionData)
 
         if actionType == "start":
@@ -150,12 +163,16 @@ class Robin(AllyTemplate):
                              "type" : "critDamageBuff",
                              "base" : 0.2,
                              "turnCount" : 100,
+                             "maxStack" : 1,
+                             "stack" : 1,
                              "deleteOthers" : False,
                              "on/off" : "on"},
                             {"name": "RobinE1",
                              "type" : "resPENBuff",
                              "base" : 0.24,
                              "turnCount" : 1,
+                             "maxStack" : 1,
+                             "stack" : 1,
                              "deleteOthers" : False,
                              "on/off" : "on"}]}
             self.actionSignal(actionData)

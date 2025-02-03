@@ -3,10 +3,17 @@ from HSREnv.envs.HSRCharacters.Enemies import *
 import numpy as np
 import random
 import pygame
+import time
 import sys
 import os
 from datetime import datetime
-
+from copy import deepcopy
+''' to do list
+buttons
+selfCharImageSwitch
+enemyhp
+enemytoughness
+'''
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
         random.seed(datetime.now().timestamp())        
@@ -86,27 +93,48 @@ class HSR:
         self.runAction()
         
     def debuffEnemy(self, effect, target):
-        if(effect["deleteOthers"] == True):
-            for enemy in self.enemies[self.wave]:
-                enemy.debuffs.pop(effect["name"], None)
+        try:
+            if(effect["deleteOthers"] == True):
+                for enemy in self.enemies[self.wave]:
+                    if(enemy != target):
+                        enemy.debuffs.pop(effect["name"], None)
+            if(effect["name"] in target.debuffs):
+                target.addDebuffStack(effect["name"])
+            else:
+                target.debuffs[effect["name"]] = effect
 
-        target.debuff[effect["name"]] = effect
+        except KeyError:
+            pass
 
     def buffAlly(self, effect, target):
-        if(effect["deleteOthers"] == True):
-            for ally in self.team:
-                ally.buffs.pop(effect["name"], None)
+        try:
+            if(effect["deleteOthers"] == True):
+                for ally in self.team:
+                    if(ally != target):
+                        target.buffs.pop(effect["name"], None)
 
-        target.buff[effect["name"]] = effect    
+            if(effect["name"] in target.buffs):
+                target.addBuffStack(effect["name"])
+            else:
+                target.buffs[effect["name"]] = effect    
+        except KeyError:
+            print("No Buff")
 
-    def doDamage(self, base, element, toughnessDamage, effect, char, target):
-        if(isinstance(self.actionOrder[0], str)):
-            self.sendSignal(self, "hit", target)
+    def isFirstChar(self):
+        return isinstance(self.actionOrder[0][0], str)
+    
+    def getFirstChar(self):
+        return self.actionOrder[0][0] if self.isFirstChar() else "Enemy"
+    
+    def doDamage(self, base, element, toughnessDamage, effects, char, target):
+        if(isinstance(target, str)):
+            self.sendSignal("hit", target)
             self._characters[target].addEnergy(base)
         else:
             target.toughness = max(0, target.toughness - toughnessDamage)
 
-            self.debuffEnemy(effect, target)
+            for effect in effects:
+                self.debuffEnemy(effect, target)
 
             dmg = base * char.getDamage() * char.calcDefMultiplier(target.getDefence(char.getDefIgnore())) * \
             target.getRES(element, char.getResPEN()) * target.getDamageReduction()
@@ -130,11 +158,20 @@ class HSR:
         char = self._characters[charName]
         
         getattr(char, action)()
-        data = char.getUpdate()
-        if(data == "NULL"):
+        update = char.getUpdate()
+        data = 0
+        if(update == "NULL"):
             return
-        
-        self.sendSignal(self, data["actionType"], data["char"])
+        while(update != "NULL"):
+            if(update[0] == "actionSignal"):
+                data = update[1]
+                self.sendSignal(data["actionType"], data["char"])
+            elif(update[0] == "addAction"):
+                for i in range(len(self.actionOrder)):
+                    if(update[1][2] <= self.actionOrder[0][2]):
+                        self.actionOrder.insert(i, deepcopy(update[1]))
+                        break
+            update = char.getUpdate()
 
         if(data["target"] == "Enemy"):
             if(data["hitType"] == "single"):
@@ -142,7 +179,7 @@ class HSR:
                 if(target.hp == 0):
                     target = 0
                 for i in range(data["hits"]):
-                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], char, target)
+                    self.doDamage(data["base"], data["element"], data["break"], data["effects"], char, target)
 
             elif(data["hitType"] == "blast"):
                 targetWave = self.enemies[self.wave]
@@ -151,10 +188,10 @@ class HSR:
                 
                 for i in range(data["hits"]):
                     if(targetIndex-1 >= 0):
-                        self.doDamage(data["base"][0], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
-                    self.doDamage(data["base"][1], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
+                        self.doDamage(data["base"][0], data["element"], data["break"][0], data["effects"], char, targetWave[targetIndex-1])
+                    self.doDamage(data["base"][1], data["element"], data["break"][0], data["effects"], char, targetWave[targetIndex-1])
                     if(targetIndex+1 <= 4):
-                        self.doDamage(data["base"][2], data["element"], data["break"][0], data["effect"], char, targetWave[targetIndex-1])
+                        self.doDamage(data["base"][2], data["element"], data["break"][0], data["effects"], char, targetWave[targetIndex-1])
 
             elif(data["hitType"] == "bounce"):
                 aliveEnemies = []
@@ -164,85 +201,109 @@ class HSR:
 
                 for i in range(data["hits"]):
                     target = random.choice(aliveEnemies)
-                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], char, self.enemies[self.wave][target])
+                    self.doDamage(data["base"], data["element"], data["break"], data["effects"], char, self.enemies[self.wave][target])
         
         elif(data["target"] == "Ally"):
             targetIndex = max(1, targetIndex)
-            if(data["hitType"] == "single"):
-                self.buffAlly(self.team[targetIndex])
-            elif(data["hitType"] == "blast"):
-                if(targetIndex-1 >= 1):
-                    self.buffAlly(self.team[targetIndex-1])
-                self.buffAlly(self.team[targetIndex])
-                if(targetIndex+1 <= 4):
-                    self.buffAlly(self.team[targetIndex+1])
-            elif(data["hitType"] == "all"):
-                for i in range(1, 5):
-                    self.buffAlly(self.team[i])
+            for effect in data["effects"]:
+                if(data["hitType"] == "single"):
+                    self.buffAlly(effect, self.team[targetIndex])
+                elif(data["hitType"] == "blast"):
+                    if(targetIndex-1 >= 1):
+                        self.buffAlly(self.team[targetIndex-1])
+                    self.buffAlly(effect, self.team[targetIndex])
+                    if(targetIndex+1 <= 4):
+                        self.buffAlly(effect, self.team[targetIndex+1])
+                elif(data["hitType"] == "all"):
+                    for i in range(1, 5):
+                        self.buffAlly(effect, self.team[i])
 
     def enemyGoDo(self, enemy, action):
         getattr(enemy, action)()
-        data = enemy.getUpdate()
+        update = enemy.getUpdate()
+        data = 0
+        if(update == "NULL"):
+            return
+        while(update != "NULL"):
+            if(update[0] == "actionSignal"):
+                data = update[1]
+                self.sendSignal(data["actionType"], data["char"])
+            elif(update[0] == "addAction"):
+                for i in range(len(self.actionOrder)):
+                    if(update[1][2] <= self.actionOrder[0][2]):
+                        self.actionOrder.insert(i, deepcopy(update[1]))
+            update = enemy.getUpdate()
+
         if(data["target"] == "Ally"):
             targetIndex = random.randint(1, 4)
             if(data["hitType"] == "single"):
-                if(target.hp == 0):
-                    target = 0
                 for i in range(data["hits"]):
-                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], enemy, self.charNames[targetIndex])
+                    self.doDamage(data["base"], data["element"], data["break"], data["effects"], enemy, self.charNames[targetIndex])
 
             elif(data["hitType"] == "blast"):
-                targetWave = self.enemies[self.wave]
-                if(targetWave[targetIndex].hp == 0):
-                    targetIndex = 0
-                
                 for i in range(data["hits"]):
                     if(targetIndex-1 >= 0):
-                        self.doDamage(data["base"][0], data["element"], data["break"][0], data["effect"], enemy, self.charNames[targetIndex])
-                    self.doDamage(data["base"][1], data["element"], data["break"][0], data["effect"], enemy, self.charNames[targetIndex])
+                        self.doDamage(data["base"][0], data["element"], data["break"][0], data["effects"], enemy, self.charNames[targetIndex])
+                    self.doDamage(data["base"][1], data["element"], data["break"][0], data["effects"], enemy, self.charNames[targetIndex])
                     if(targetIndex+1 <= 4):
-                        self.doDamage(data["base"][2], data["element"], data["break"][0], data["effect"], enemy, self.charNames[targetIndex])
+                        self.doDamage(data["base"][2], data["element"], data["break"][0], data["effects"], enemy, self.charNames[targetIndex])
 
             elif(data["hitType"] == "bounce"):
-                aliveEnemies = []
-                for i in range(5):
-                    if(self.enemies[self.wave][i].hp > 0):
-                        aliveEnemies.append(i)
+                aliveChars = [1, 2, 3, 4]
 
                 for i in range(data["hits"]):
-                    target = random.choice(aliveEnemies)
-                    self.doDamage(data["base"], data["element"], data["break"], data["effect"], enemy, self.charNames[targetIndex])
+                    target = random.choice(aliveChars)
+                    self.doDamage(data["base"], data["element"], data["break"], data["effects"], enemy, self.charNames[target])
 
     def sendSignal(self, actionType, actionChar):
+        print(f"{actionChar} did/got {actionType}")
+        for i in self.actionOrder:
+            if(not isinstance(i[0], str)):
+                print(f", [enemy, {i[1]}, {i[2]}]", end= '')
+            else:
+                print(f", {i}", end= '')
+        print()
         for i in range(1, 5):
             self.team[i].actionDetect(actionType, actionChar)
 
-    def action(self, action):
+    def action(self, action, mode="human"):
         if("ultimate" in action["action"]):
             self.charGoDo(action["action"][8:], "ultimate", action["target"])
             self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].calcActionValue()
-            print("YOOO")
-
+            self.charActionImage(action["action"][8:], "ultimate")
         elif(self.actionOrder[0][1] != "pending"):
-            if(isinstance(self.actionOrder[0], str)):
+            if(self.isFirstChar()):
+                self.charActionImage(self.getFirstChar(), self.actionOrder[0][1])
                 self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
             else:
                 self.enemyGoDo(self.actionOrder[0][0], self.actionOrder[0][1])
             del self.actionOrder[0]
             self.runAction()
         else:
-            if(isinstance(self.actionOrder[0], str)):
-                self.charGoDo(self.actionOrder[0][0], action["action"], action["target"])
-                self.actionOrder[0][2] = self._characters[self.actionOrder[0][0]].calcActionValue()
-            else:
-                self.enemyGoDo(self.actionOrder[0][0], self.actionOrder[0][0].doAction())
-                self.actionOrder[0][2] = self.actionOrder[0].calcActionValue()
-            
-            for i in range(len(self.actionOrder) - 1):
-                if(self.actionOrder[i][2] >= self.actionOrder[i+1][2]):
-                    self.actionOrder[i], self.actionOrder[i+1] = self.actionOrder[i+1], self.actionOrder[i]
+            if(self.isFirstChar()):
+                char = self.actionOrder[0][0]
+                del self.actionOrder[0]
+                self.charActionImage(char, action["action"])
+                self.charGoDo(char, action["action"], action["target"])
+
+                for i in range(len(self.actionOrder)):
+                    if(self._characters[char].calcActionValue() < self.actionOrder[i][2]):
+                        self.actionOrder.insert(i, [char, "pending", self._characters[char].calcActionValue()])
+                        break
                 else:
-                    break
+                    self.actionOrder.append([char, "pending", self._characters[char].calcActionValue()])
+            else:
+                char = self.actionOrder[0][0]
+                del self.actionOrder[0]
+                self.enemyGoDo(char, char.doAction())
+
+                for i in range(len(self.actionOrder)):
+                    if(char.calcActionValue() < self.actionOrder[i][2]):
+                        self.actionOrder.insert(i, [char, "pending", char.calcActionValue()])
+                        break
+                else:
+                    self.actionOrder.append([char, "pending", char.calcActionValue()])
+            self.runAction()
 
     def evaluate(self):
         for i in range(len(self.enemies[self.wave])):#300000
@@ -280,7 +341,8 @@ class HSR:
         self.deltaTime = 0
 
         self.lockPos = (-100, -100)
-        
+        self.hover = {"basic" : False, "skill" : False}
+
         self.screenWidth, self.screenHeight = 1000, 587
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight))
         pygame.display.set_caption('image')
@@ -291,11 +353,17 @@ class HSR:
         for i in range(1, 5):
             self.charImageEnergyPos.append((self.charImagePos[i][0] + 90, self.charImagePos[i][1] + 170))
 
+        self.imageTime = {
+            "Adventurine" : {"basic":700,"skill":700,"talent":700,"ultimate":1000},
+            "Feixiao" : {"basic":700,"skill":700,"talent":1200,"ultimate":1500},
+            "Robin" : {"basic":700,"skill":700,"talent":700,"ultimate":1500},
+            "March7" : {"basic":700,"skill":700,"talent":700,"ultimate":1000}
+        }
         self.charImage = {
-            self.charNames[1] : {"action" : "pending", "to" : self.INF},
-            self.charNames[2] : {"action" : "pending", "to" : self.INF},
-            self.charNames[3] : {"action" : "pending", "to" : self.INF},
-            self.charNames[4] : {"action" : "pending", "to" : self.INF}
+            self.charNames[1] : [{"action" : "pending", "to" : -1}],
+            self.charNames[2] : [{"action" : "pending", "to" : -1}],
+            self.charNames[3] : [{"action" : "pending", "to" : -1}],
+            self.charNames[4] : [{"action" : "pending", "to" : -1}]
         }
         self.allImages = []
         cwd = os.getcwd()        
@@ -318,15 +386,23 @@ class HSR:
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
                 elif("energy" in flname):
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (80, 80))
+                elif("buttons" in flname):
+                    self.pygameImages[f"{flname}_nothover"] = pygame.transform.scale(self.pygameImages[flname], (80, 80))
+                    self.pygameImages[f"{flname}_hover"] = pygame.transform.scale(self.pygameImages[flname], (100, 100))
                 else:#char
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 250))
             else:
                 continue
 
+    def charActionImage(self, char, action):
+        self.charImage[char].append({"action" : action, "to" : pygame.time.get_ticks() + self.imageTime[char][action]})
+        print(pygame.time.get_ticks())
+
     def _checkImageAction(self, char):
-        if(pygame.time.get_ticks() > self.charImage[char]["to"]):
-            self.charImage[char]["to"] = self.INF
-            self.charImage[char]["action"] = "pending"
+        while(len(self.charImage[char]) and pygame.time.get_ticks() > self.charImage[char][0]["to"]):
+            self.charImage[char].pop(0)
+        if(len(self.charImage[char]) == 0):
+            self.charImage[char].append({"action" : "pending", "to" : -1})
 
     def addImage(self, img, pos, index, name, layer):
         self.allImages.append({"img" : img,
@@ -342,6 +418,7 @@ class HSR:
 
     def view(self, mode):
         target = 0
+        
         action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
@@ -361,25 +438,45 @@ class HSR:
                         if("Enemy" in data["name"]):
                             target = data["index"]
                             self.lockPos = (data["pos"][0]+data["rect"].width//2 - 10, data["pos"][1] - 20)
-                        elif("Energy" in data["name"]):
+                        
+                        elif("energy" in data["name"]):
                             action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : target}
-                        elif("Basic" in data["name"]):
-                            pass
-                        elif("Skill" in data["name"]):
-                            pass
+                        
+                        elif("button" in data["name"]):
+                            if("basic" in data["name"]):
+                                if(self.hover["basic"] == False):
+                                    self.hover["basic"] = True
+                                    self.hover["skill"] = False
+                                else:
+                                    action = {"action" : f"basic", "target" : target}
+                            elif("skill" in data["name"]):
+                                if(self.hover["skill"] == False):
+                                    self.hover["basic"] = False
+                                    self.hover["skill"] = True
+                                else:
+                                    action = {"action" : f"skill", "target" : target}
+
 
         self.screen.fill((0,0,0))
         self.addImage(self.pygameImages["HSR_title_screen"], (0, 0), 0, "HSRTitleScreen", 0)
+        
         #Ally Images
         for i in range(1, 5):
             char = self.charNames[i]
             self._checkImageAction(char)
             #print(f"{char}_{self.charImage[char]['action']}")
-            name = f"{char}_{self.charImage[char]['action']}"
+            name = f"{char}_{self.charImage[char][0]['action']}"
             energyName = f"{char}_energy_{'' if self._characters[char].checkUltimate() else 'not'}ready"
             self.addImage(self.pygameImages[name], self.charImagePos[i], i, name, 1)
             self.addImage(self.pygameImages[energyName], self.charImageEnergyPos[i], i, energyName, 2)
-        #Enemy Images
+            
+        nowChar = self.getFirstChar()
+        self.buttonPos = [(765, 430), (865, 330)]
+        if(nowChar != "Enemy"):
+            self.addImage(self.pygameImages[f"{nowChar}_buttons_basic_{'' if self.hover['basic'] else 'not'}hover"], self.buttonPos[0], 0, f"{nowChar}_buttons_basic_{'' if self.hover['basic'] else 'not'}hover", 2)
+            self.addImage(self.pygameImages[f"{nowChar}_buttons_skill_{'' if self.hover['skill'] else 'not'}hover"], self.buttonPos[1], 1, f"{nowChar}_buttons_skill_{'' if self.hover['skill'] else 'not'}hover", 2)
+        
+        #Enemy Images      
         enmCount = 0
         for enm in self.enemies[self.wave]:
             if(enm.hp > 0):
@@ -390,9 +487,17 @@ class HSR:
             img = self.pygameImages[f"Enemy_{enmName}"]
             pos = (20 + self.screenWidth//(enmCount)*(i) - (10 if enmName == "elite" else 0), 40)
             self.addImage(img, pos, i, f"Enemy_{enmName}", 1)
+        
         #Lock Image
         self.addImage(self.pygameImages["Lock"], self.lockPos, target, "Lock", 3)
 
+        if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
+            #print("Enemy lol")
+            self.action({"action" : "None", "target" : "None"})
+        elif(action["action"] != "None"):
+            self.action(action)
+
+        #update
         self._updateImages()
         pygame.display.update()
         self.deltaTime = self.fpsClock.tick(60)
