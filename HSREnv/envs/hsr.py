@@ -8,9 +8,10 @@ import sys
 import os
 from datetime import datetime
 from copy import deepcopy
+
 ''' to do list
-buttons
-selfCharImageSwitch
+buttons - done
+selfCharImageSwitch - done
 enemyhp
 enemytoughness
 '''
@@ -148,6 +149,9 @@ class HSR:
             dmg = round(dmg)
             target.hp = max(0, target.hp - dmg)
 
+            #print(base, char.getDamage(), char.calcDefMultiplier(target.getDefence(char.getDefIgnore())), \
+            #target.getRES(element, char.getResPEN()), target.getDamageReduction())
+
             if(target.hp == 0):
                 for i in range(4):
                     if(self.enemies[self.wave][i].hp == 0):
@@ -256,6 +260,7 @@ class HSR:
                     self.doDamage(data["base"], data["element"], data["break"], data["effects"], enemy, self.charNames[target])
 
     def sendSignal(self, actionType, actionChar):
+        '''
         print(f"{actionChar} did/got {actionType}")
         for i in self.actionOrder:
             if(not isinstance(i[0], str)):
@@ -263,6 +268,7 @@ class HSR:
             else:
                 print(f", {i}", end= '')
         print()
+        '''
         for i in range(1, 5):
             self.team[i].actionDetect(actionType, actionChar)
 
@@ -342,6 +348,7 @@ class HSR:
 
         self.lockPos = (-100, -100)
         self.hover = {"basic" : False, "skill" : False}
+        self.viewTarget = 0
 
         self.screenWidth, self.screenHeight = 1000, 587
         self.screen = pygame.display.set_mode((self.screenWidth, self.screenHeight))
@@ -366,6 +373,7 @@ class HSR:
             self.charNames[4] : [{"action" : "pending", "to" : -1}]
         }
         self.allImages = []
+        self.allRects = []
         cwd = os.getcwd()        
         directory = os.fsencode(cwd + "\\HSREnv\\envs\\assets")
     
@@ -411,14 +419,21 @@ class HSR:
                                "name" : name,
                                "layer" : layer})
     
-    def _updateImages(self):
-        self.allImages = sorted(self.allImages, key=lambda x: x["layer"])
-        for data in self.allImages:
-            self.screen.blit(data["img"], data["pos"])
+    def addRect(self, color, rect, layer):
+        self.allRects.append({"color" : color,
+                              "rect" : rect,
+                              "layer" : layer})
 
-    def view(self, mode):
-        target = 0
-        
+    def _updateImages(self):
+        for i in range(10):
+            for data in self.allImages:
+                if(data["layer"] == i):
+                    self.screen.blit(data["img"], data["pos"])
+            for data in self.allRects:
+                if(data["layer"] == i):
+                    pygame.draw.rect(self.screen, data["color"], data["rect"])
+
+    def view(self, mode):        
         action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
@@ -427,6 +442,7 @@ class HSR:
                                "index" : img["index"], 
                                "name" : img["name"]})
         self.allImages = []
+        self.allRects = []
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
                 pygame.quit() # Opposite of pygame.init
@@ -436,11 +452,10 @@ class HSR:
                 for data in imageRects:
                     if(data["rect"].collidepoint(x, y)):
                         if("Enemy" in data["name"]):
-                            target = data["index"]
-                            self.lockPos = (data["pos"][0]+data["rect"].width//2 - 10, data["pos"][1] - 20)
+                            self.viewTarget = data["index"]
                         
                         elif("energy" in data["name"]):
-                            action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : target}
+                            action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : self.viewTarget}
                         
                         elif("button" in data["name"]):
                             if("basic" in data["name"]):
@@ -448,13 +463,13 @@ class HSR:
                                     self.hover["basic"] = True
                                     self.hover["skill"] = False
                                 else:
-                                    action = {"action" : f"basic", "target" : target}
+                                    action = {"action" : f"basic", "target" : self.viewTarget}
                             elif("skill" in data["name"]):
                                 if(self.hover["skill"] == False):
                                     self.hover["basic"] = False
                                     self.hover["skill"] = True
                                 else:
-                                    action = {"action" : f"skill", "target" : target}
+                                    action = {"action" : f"skill", "target" : self.viewTarget}
 
 
         self.screen.fill((0,0,0))
@@ -482,14 +497,28 @@ class HSR:
             if(enm.hp > 0):
                 enmCount += 1
         
+        print("[", end='')
+
         for i in range(enmCount):
-            enmName = self.enemies[self.wave][i].name
+            enm = self.enemies[self.wave][i]
+            enmName = enm.name
             img = self.pygameImages[f"Enemy_{enmName}"]
             pos = (20 + self.screenWidth//(enmCount)*(i) - (10 if enmName == "elite" else 0), 40)
             self.addImage(img, pos, i, f"Enemy_{enmName}", 1)
+            #Enemy HpBar
+            ratio = enm.hp / enm.maxHp
+            add = (10 if enmName=="elite" else 0)
+            #self.addRect("black", (pos[0] + add, pos[1]-25, 150, 20), 1)
+            self.addRect((195, 75, 60), (pos[0] + add, pos[1]-25, 150 * ratio, 20), 2)
         
+            print(enm.hp, ratio, end=', ')
+            
+        print("]")
+
         #Lock Image
-        self.addImage(self.pygameImages["Lock"], self.lockPos, target, "Lock", 3)
+        enm = self.enemies[self.wave][self.viewTarget]
+        self.lockPos = pos = (20 + self.screenWidth//(enmCount)*(self.viewTarget) + 65, 20)
+        self.addImage(self.pygameImages["Lock"], self.lockPos, self.viewTarget, "Lock", 3)
 
         if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
             #print("Enemy lol")

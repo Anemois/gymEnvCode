@@ -7,6 +7,7 @@ class BaseEnemy():
         self.debuffs = {}
         self.name = name
         self.hp = hp
+        self.maxHp = hp
         self.atk = atk
         self.defence = defence
         self.spd = spd #[132, 158, 227]
@@ -47,7 +48,7 @@ class BaseEnemy():
         return self.spd * self.spdBuff
     
     def getRES(self, charType = [], resPEN = 0):
-        return 1 - ((0 if charType in self.weakness else 20) - resPEN)
+        return 1 - ((0 if charType in self.weakness else 0.20) - resPEN)
 
     def getDamageReduction(self):
         return 0.9 if self.toughness > 0 else 1
