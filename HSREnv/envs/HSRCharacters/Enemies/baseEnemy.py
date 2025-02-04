@@ -97,6 +97,7 @@ class BaseEnemy():
         return action
 
     def single(self):
+        self.toughness = self.maxToughness
         actionData = {
             "char": "Enemy",
             "action": "basic",
@@ -112,6 +113,7 @@ class BaseEnemy():
         self.actionSignal(actionData)
 
     def blast(self):
+        self.toughness = self.maxToughness
         actionData = {
             "char": "Enemy",
             "action": "basic",

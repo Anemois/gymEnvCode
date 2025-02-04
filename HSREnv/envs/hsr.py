@@ -10,8 +10,9 @@ from datetime import datetime
 from copy import deepcopy
 
 ''' to do list
-enemytoughness + weaknesses
-actionOrder
+enemytoughness + weaknesses - done
+actionOrder - done
+retake adveturine action and enemy action
 '''
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
@@ -139,12 +140,16 @@ class HSR:
             self._characters[target].addEnergy(base)
             return -1
         else:
-            target.toughness = max(0, target.toughness - toughnessDamage)
+            dmg = 0
+            if(target.toughness > 0):
+                target.toughness = max(0, target.toughness - toughnessDamage)
+                if(target.toughness == 0):
+                    dmg += 5000 
 
             for effect in effects:
                 self.debuffEnemy(effect, target)
 
-            dmg = self.calcDamage(base, element, char, target)        
+            dmg += self.calcDamage(base, element, char, target)        
 
             for buff in char.buffs:
                 buff = char.buffs[buff]
@@ -429,11 +434,6 @@ class HSR:
                 #print(flname[:3])
                 if(flname[:3] == "HSR"):
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (self.screenWidth, self.screenHeight))
-                elif(flname[:5] == "Enemy"):
-                    if("basic" in flname):
-                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (150, 150))
-                    else:
-                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 200))
                 elif(flname == "Lock"):
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
                 elif("energy" in flname):
@@ -443,6 +443,16 @@ class HSR:
                     self.pygameImages[f"{flname}_hover"] = pygame.transform.scale(self.pygameImages[flname], (100, 100))
                 elif("weakness" in flname):
                     self.pygameImages[f"{flname}"] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
+                elif("actionOrder" in flname):
+                    if("small" in flname):
+                        self.pygameImages[f"{flname}"] = pygame.transform.scale(self.pygameImages[flname], (100, 50))
+                    else:
+                        self.pygameImages[f"{flname}"] = pygame.transform.scale(self.pygameImages[flname], (120, 60))
+                elif("Enemy" in flname):
+                    if("basic" in flname):
+                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (150, 150))
+                    else:
+                        self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 200))
                 else:#char
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 250))
             else:
@@ -562,7 +572,7 @@ class HSR:
             enm = self.enemies[self.wave][i]
             enmName = enm.name
             imgHp = self.pygameImages[f"Enemy_{enmName}"]
-            pos = (120 + (self.screenWidth-120)//(enmCount)*(i) - (10 if enmName == "elite" else 0), 60)
+            pos = (130 + (self.screenWidth-130)//(enmCount)*(i) - (10 if enmName == "elite" else 0), 60)
             self.addImage(imgHp, pos, i, f"Enemy_{enmName}", 1)
             #Enemy Bars
             ratioHp = enm.hp / enm.maxHp
@@ -595,6 +605,20 @@ class HSR:
 
         if(self.enemies[self.wave][self.viewTarget].hp == 0):
             self.viewTarget = 0
+
+        #Action Order
+        first = self.actionOrder[0][0]
+        second = self.actionOrder[1][0]
+        self.actionOrderPos = [(0, 30), (0, 100)]
+
+        if(isinstance(first, str)):
+            self.addImage(self.pygameImages[f"{first}_actionOrder_big"], self.actionOrderPos[0], 0, f"{first}_actionOrder_big", 1)
+        else:
+            self.addImage(self.pygameImages[f"Enemy_actionOrder_big"], self.actionOrderPos[0], 0, f"Enemy_actionOrder_big", 1)
+        if(isinstance(second, str)):
+            self.addImage(self.pygameImages[f"{second}_actionOrder_small"], self.actionOrderPos[1], 1, f"{second}_actionOrder_small", 1)
+        else:
+            self.addImage(self.pygameImages[f"Enemy_actionOrder_small"], self.actionOrderPos[1], 1, f"{second}_actionOrder_small", 1)
 
         #update
         self._updateImages()
