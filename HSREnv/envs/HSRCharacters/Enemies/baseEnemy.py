@@ -29,12 +29,12 @@ class BaseEnemy():
         self.obsWeakness = []
         weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
         for i in range(7):
-            self.obsWeakness.append(1 if self.weakness in weaknesses else 0)
+            self.obsWeakness.append(1 if weaknesses[i] in self.weakness else 0)
 
         self.moves = ["single", "blast"]
         self.moveptr = 0
 
-        random.seed(datetime.now().timestamp() + 1)
+        #random.seed(datetime.now().timestamp() + 1)
 
         self.updates = []
 

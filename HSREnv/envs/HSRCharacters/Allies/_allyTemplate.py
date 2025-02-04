@@ -25,7 +25,7 @@ class AllyTemplate():
         self.defIgnore = 0
         self.resPEN = 0
 
-        random.seed(datetime.now().timestamp())
+        #random.seed(datetime.now().timestamp())
 
         self.updates = []
 

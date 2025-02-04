@@ -1,11 +1,4 @@
-a = {}
-a["wa"] = 3
-a["wo"] = 3
-for i in a:
-    i = a[i]
-    print(i)
-del a["wa"]
-del a["wfawa"]
-for i in a:
-    i = a[i]
-    print(i)
+import random
+weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
+for i in range(10):
+    print(random.sample(weaknesses, 3))

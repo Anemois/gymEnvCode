@@ -10,14 +10,8 @@ from datetime import datetime
 from copy import deepcopy
 
 ''' to do list
-buttons - done
-selfCharImageSwitch - done
-enemyhp - done
-displayDamage - done
-enemyWaves - done
-robin atk plusss - done
+enemytoughness + weaknesses
 actionOrder
-enemytoughness
 '''
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
@@ -405,6 +399,7 @@ class HSR:
         self.charImagePos = [(0, 0), (10, 317), (190, 317), (370, 317), (550, 317)]
         self.buttonPos = [(765, 460), (865, 360)]
         self.charImageEnergyPos = [(0, 0)]
+        self.weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
         for i in range(1, 5):
             self.charImageEnergyPos.append((self.charImagePos[i][0] + 90, self.charImagePos[i][1] + 170))
 
@@ -446,6 +441,8 @@ class HSR:
                 elif("buttons" in flname):
                     self.pygameImages[f"{flname}_nothover"] = pygame.transform.scale(self.pygameImages[flname], (80, 80))
                     self.pygameImages[f"{flname}_hover"] = pygame.transform.scale(self.pygameImages[flname], (100, 100))
+                elif("weakness" in flname):
+                    self.pygameImages[f"{flname}"] = pygame.transform.scale(self.pygameImages[flname], (20, 20))
                 else:#char
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (170, 250))
             else:
@@ -511,7 +508,6 @@ class HSR:
                     if(data["rect"].collidepoint(x, y)):
                         if("Enemy" in data["name"]):
                             self.viewTarget = data["index"]
-                        
                         elif("energy" in data["name"] and self.team[data["index"]].checkUltimate()):
                             action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : self.viewTarget}
                         
@@ -565,15 +561,23 @@ class HSR:
         for i in range(enmCount):
             enm = self.enemies[self.wave][i]
             enmName = enm.name
-            img = self.pygameImages[f"Enemy_{enmName}"]
+            imgHp = self.pygameImages[f"Enemy_{enmName}"]
             pos = (120 + (self.screenWidth-120)//(enmCount)*(i) - (10 if enmName == "elite" else 0), 60)
-            self.addImage(img, pos, i, f"Enemy_{enmName}", 1)
-            #Enemy HpBar
-            ratio = enm.hp / enm.maxHp
+            self.addImage(imgHp, pos, i, f"Enemy_{enmName}", 1)
+            #Enemy Bars
+            ratioHp = enm.hp / enm.maxHp
+            ratioToughness = enm.toughness / enm.maxToughness
             add = (10 if enmName=="elite" else 0)
             self.addRect("black", (pos[0] + add, pos[1]-25, 150, 20), 1)
-            self.addRect((195, 75, 60), (pos[0] + add, pos[1]-15, 150 * ratio, 10), 2)
-        
+            self.addRect((195, 75, 60), (pos[0] + add, pos[1]-15, 150 * ratioHp, 10), 2)
+            self.addRect((255, 255, 255), (pos[0] + add, pos[1]-25, 150 * ratioToughness, 10), 2)
+            #Enemy weakness
+            cnt = 0
+            for i, element in enumerate(self.weaknesses):
+                if(enm.obsWeakness[i] == 1):
+                    imgToughness = self.pygameImages[f"weakness_{element}"]
+                    self.addImage(imgToughness, (pos[0]+cnt*20+add, pos[1]-45), i, f"weakness_{element}", 3)
+                    cnt += 1
             #print(enm.hp, ratio, end=', ')
             
         #print("]")
