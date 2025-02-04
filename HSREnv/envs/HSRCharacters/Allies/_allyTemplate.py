@@ -80,6 +80,9 @@ class AllyTemplate():
             return "NULL"
         else:
             return self.updates.pop(0)
+    
+    def getUltName(self):
+        return 'ready' if self.checkUltimate() else 'notready'
 
     def calcActionValue(self):
         return 10000 / self.getSpeed()

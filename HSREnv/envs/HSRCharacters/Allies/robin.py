@@ -19,8 +19,23 @@ class Robin(AllyTemplate):
     def getSpeed(self):
         return 90 if self.singing else self.spd * self.speedBuff
 
+    def getCritRate(self):
+        critRateBuff = self.getBuff("critRateBuff")
+        return (self.critRate + critRateBuff) if not self.singing else 0.5
+    
+    def getCritDamage(self):
+        critDamageBuff = self.getBuff("critDamageBuff")
+        return (self.critDamage + critDamageBuff) if not self.singing else 2
+
+    def getUltName(self):
+        if(self.singing):
+            return "disable"
+        return 'ready' if self.checkUltimate() else 'notready'
+
     def basic(self):
         self.countdown -= 1
+        if(self.singing):
+            self.actionSignal(["robinUltDown", "Robin"])
         self.singing = False
         if self.countdown <= 0:
             actionData = {
@@ -63,6 +78,8 @@ class Robin(AllyTemplate):
     def skill(self):
         self.countdown = 3
         self.addEnergy(30)
+        if(self.singing):
+            self.actionSignal(["robinUltDown", "Robin"])
         self.singing = False
         actionData = {
             "char": "Robin",
@@ -137,7 +154,7 @@ class Robin(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "on"},
+                             "on/off" : "off"},
                             {"name": "RobinUltAtk",
                              "type" : "followAtk",
                              "base" : self.getAttack() * 1.2,
@@ -145,7 +162,7 @@ class Robin(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "on"}]}
+                             "on/off" : "off"}]}
             self.actionSignal(actionData)
 
         if actionType == "start":

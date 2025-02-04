@@ -53,7 +53,6 @@ class Feixiao(AllyTemplate):
 
     def ultimate(self):
         self.addEnergy(-self.energyCost)
-        self.addEnergy(5)
         actionData = {
             "char": "Feixiao",
             "action": "ultimate",
