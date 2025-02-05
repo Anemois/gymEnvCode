@@ -165,7 +165,15 @@ class March7(AllyTemplate):
         }
         self.actionSignal(actionData)
         self.checkCharge()
-
+    
+    def grep(self, grep):
+        data = {
+            "basic" : {"target" : "Enemy", "hitType" : "single"},
+            "skill" : {"target" : "Ally", "hitType" : "single"},
+            "ultimate" : {"target" : "Enemy", "hitType" : "single"}
+        }
+        return data[grep]
+    
     def actionDetect(self, actionType, actionChar):
         if actionType == "start":
             self.actionValue = max(0, self.actionValue - 10000 * 0.25)

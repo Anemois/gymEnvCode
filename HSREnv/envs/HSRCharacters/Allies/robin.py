@@ -131,7 +131,15 @@ class Robin(AllyTemplate):
                           "deleteOthers" : False,
                           "on/off" : "on"}]}
         self.actionSignal(actionData)
-
+    
+    def grep(self, grep):
+        data = {
+            "basic" : {"target" : "Enemy", "hitType" : "single"},
+            "skill" : {"target" : "Ally", "hitType" : "all"},
+            "ultimate" : {"target" : "Ally", "hitType" : "all"}
+        }
+        return data[grep]
+    
     def actionDetect(self, actionType, actionChar):
         if actionType == "atk":
             self.addEnergy(2)

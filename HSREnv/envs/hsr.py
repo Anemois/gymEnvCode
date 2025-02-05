@@ -3,6 +3,7 @@ from HSREnv.envs.HSRCharacters.Enemies import *
 import numpy as np
 import random
 import pygame
+import math
 import time
 import sys
 import os
@@ -10,9 +11,9 @@ from datetime import datetime
 from copy import deepcopy
 
 ''' to do list
-enemytoughness + weaknesses - done
-actionOrder - done
-retake adveturine action and enemy action
+retake adveturine action and enemy action - done
+energy display - done
+target choice display better - done
 '''
 class HSR:
     def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
@@ -137,7 +138,8 @@ class HSR:
     def doDamage(self, base, element, toughnessDamage, effects, char, target):
         if(isinstance(target, str)):
             self.sendSignal("hit", target)
-            self._characters[target].addEnergy(base)
+            if(target != "Feixiao"):
+                self._characters[target].addEnergy(base)
             return -1
         else:
             dmg = 0
@@ -287,8 +289,9 @@ class HSR:
             return dmg
 
     def sendSignal(self, actionType, actionChar):
-        '''
+        
         print(f"{actionChar} did/got {actionType}")
+        '''
         for i in self.actionOrder:
             if(not isinstance(i[0], str)):
                 print(f", [enemy, {i[1]}, {i[2]}]", end= '')
@@ -393,7 +396,7 @@ class HSR:
                      "big" : pygame.font.SysFont('Comic Sans MS', 30)}
 
         self.lockPos = (-100, -100)
-        self.hover = {"basic" : False, "skill" : False}
+        self.hover = {"basic" : True, "skill" : False}
         self.viewTarget = 0
 
         self.screenWidth, self.screenHeight = 1000, 587
@@ -401,7 +404,8 @@ class HSR:
         pygame.display.set_caption('image')
         self.pygameImages = {}
 
-        self.charImagePos = [(0, 0), (10, 317), (190, 317), (370, 317), (550, 317)]
+        self.charImagePos = [(0, 0), (10, 307), (190, 307), (370, 307), (550, 307
+                                                                         )]
         self.buttonPos = [(765, 460), (865, 360)]
         self.charImageEnergyPos = [(0, 0)]
         self.weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
@@ -485,6 +489,15 @@ class HSR:
                               "pos" : pos,
                               "layer" : layer})
 
+    def addLock(self, index, target, enmCount):
+        #print("WAFWUAH")
+        if(target == "Enemy"):
+            self.lockPos = (120 + (self.screenWidth-120)//(enmCount)*(index) + 65, 40)
+            self.addImage(self.pygameImages["Lock"], self.lockPos, index, "Lock", 3)
+        else:
+            self.lockPos = (self.charImagePos[index][0] + 75, self.charImagePos[index][1] - 20)
+            self.addImage(self.pygameImages["Lock"], self.lockPos, index, "Lock", 3)
+
     def _updateImages(self):
         for i in range(10):
             for data in self.allImages:
@@ -516,11 +529,12 @@ class HSR:
                 x, y = event.pos
                 for data in imageRects:
                     if(data["rect"].collidepoint(x, y)):
-                        if("Enemy" in data["name"]):
+                        targetEnemy = (self.isFirstChar() and self._characters[self.getFirstChar()].grep("basic" if self.hover["basic"] else "skill")["target"] == "Enemy")
+
+                        if("Enemy_pose" in data["name"] and targetEnemy):
                             self.viewTarget = data["index"]
                         elif("energy" in data["name"] and self.team[data["index"]].checkUltimate()):
                             action = {"action" : f"ultimate{self.charNames[data['index']]}", "target" : self.viewTarget}
-                        
                         elif("button" in data["name"]):
                             if("basic" in data["name"]):
                                 if(self.hover["basic"] == False):
@@ -534,7 +548,8 @@ class HSR:
                                     self.hover["skill"] = True
                                 else:
                                     action = {"action" : f"skill", "target" : self.viewTarget}
-
+                        elif("Enemy" not in data["name"] and "pose" in data["name"] and not targetEnemy):
+                            self.viewTarget = data["index"]
 
         self.screen.fill((0,0,0))
         self.addImage(self.pygameImages["HSR_title_screen"], (0, 0), 0, "HSRTitleScreen", 0)
@@ -544,15 +559,18 @@ class HSR:
             char = self.charNames[i]
             self._checkImageAction(char)
             #print(f"{char}_{self.charImage[char]['action']}")
-            name = f"{char}_{self.charImage[char][0]['action']}"
+            name = f"{char}_pose_{self.charImage[char][0]['action']}"
             energyName = f"{char}_energy_{self._characters[char].getUltName()}"
             self.addImage(self.pygameImages[name], self.charImagePos[i], i, name, 1)
             self.addImage(self.pygameImages[energyName], self.charImageEnergyPos[i], i, energyName, 2)
-            
             #display Damage
             dmg = self.charImage[char][0]['dmg']
             if(dmg > 0):
                 self.addText(str(dmg), 2, (900, 250), "big")
+            #display Energy
+            actChar = self._characters[char]
+            pos = (self.charImageEnergyPos[i][0]+15, self.charImageEnergyPos[i][1]+80)
+            self.addText(f"{math.floor(actChar.energy)}/{math.floor(actChar.energyMax)}", 4, pos, "small")
 
         nowChar = self.getFirstChar()
         
@@ -571,9 +589,9 @@ class HSR:
         for i in range(enmCount):
             enm = self.enemies[self.wave][i]
             enmName = enm.name
-            imgHp = self.pygameImages[f"Enemy_{enmName}"]
+            imgHp = self.pygameImages[f"Enemy_pose_{enmName}"]
             pos = (130 + (self.screenWidth-130)//(enmCount)*(i) - (10 if enmName == "elite" else 0), 60)
-            self.addImage(imgHp, pos, i, f"Enemy_{enmName}", 1)
+            self.addImage(imgHp, pos, i, f"Enemy_pose_{enmName}", 1)
             #Enemy Bars
             ratioHp = enm.hp / enm.maxHp
             ratioToughness = enm.toughness / enm.maxToughness
@@ -593,9 +611,20 @@ class HSR:
         #print("]")
 
         #Lock Image
-        enm = self.enemies[self.wave][self.viewTarget]
-        self.lockPos = pos = (120 + (self.screenWidth-120)//(enmCount)*(self.viewTarget) + 65, 40)
-        self.addImage(self.pygameImages["Lock"], self.lockPos, self.viewTarget, "Lock", 3)
+        if(self.isFirstChar()):
+            char = self._characters[self.getFirstChar()]
+            data = char.grep("basic" if self.hover["basic"] else "skill")
+            if(data["hitType"] == "single" or data["hitType"] == "bounce"):
+                self.addLock(self.viewTarget, data["target"], enmCount)
+            elif(data["hitType"] == "blast"):
+                if(self.viewTarget-1 >= (0 if data["target"] == "Enemy" else 1)):
+                    self.addLock(self.viewTarget-1, data["target"], enmCount)
+                self.addLock(self.viewTarget, data["target"], enmCount)
+                if(self.viewTarget+1 <= 4):
+                    self.addLock(self.viewTarget+1, data["target"], enmCount)
+            elif(data["hitType"] == "all"):
+                for i in range((0 if data["target"] == "Enemy" else 1), 5):
+                    self.addLock(i, data["target"], enmCount)
 
         if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
             #print("Enemy lol")

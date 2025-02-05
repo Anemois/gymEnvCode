@@ -16,8 +16,6 @@ class Feixiao(AllyTemplate):
 
         self.followUp = False
 
-        random.seed(datetime.now().timestamp())
-
     def basic(self):    
         self.followUp = True
         actionData = {
@@ -33,7 +31,7 @@ class Feixiao(AllyTemplate):
             "effects": {}
         }
         self.actionSignal(actionData)
-
+    
     def skill(self):
         self.followUp = True
         actionData = {
@@ -65,7 +63,7 @@ class Feixiao(AllyTemplate):
             "break": 60,
             "effects": {}
         }
-        self.actionSignal(actionData)    
+        self.actionSignal(actionData)
 
     def talent(self):
         actionData = {
@@ -81,10 +79,19 @@ class Feixiao(AllyTemplate):
             "effects": {}
         }
         self.actionSignal(actionData) 
+    
+    def grep(self, grep):
+        data = {
+            "basic" : {"target" : "Enemy", "hitType" : "single"},
+            "skill" : {"target" : "Enemy", "hitType" : "single"},
+            "ultimate" : {"target" : "Enemy", "hitType" : "single"}
+        }
+        return data[grep]
 
     def actionDetect(self, actionType, actionChar):
         if(actionType == "atk" and actionChar != "Enemy"):
             self.addEnergy(0.5)
+            print("ADDD", self.energy, actionChar)
             if(self.followUp and actionChar != "Feixiao"):
                 self.followUp = False
                 self.addAction(["Feixiao", "talent", -1])

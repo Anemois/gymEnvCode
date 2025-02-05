@@ -30,7 +30,7 @@ class AllyTemplate():
         self.updates = []
 
     def addEnergy(self, x):
-        self.energy = max(min(self.energyMax, self.energy + x), 0)
+        self.energy = max(min(self.energyMax, self.energy + x*self.energyRegenRate), 0)
     
     def checkUltimate(self):
         return self.energy >= self.energyCost
@@ -103,7 +103,10 @@ class AllyTemplate():
         print("TIS EMPTY") 
 
     def skill(self):
-        print("TIS EMPTY")  
+        print("TIS EMPTY") 
+
+    def grep(self, grep):
+        print("TIS EMPTY")
 
     def ultimate(self):
         print("TIS EMPTY")

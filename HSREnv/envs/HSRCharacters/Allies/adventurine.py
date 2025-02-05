@@ -94,6 +94,14 @@ class Adventurine(AllyTemplate):
         }
         self.actionSignal(actionData)    
 
+    def grep(self, grep):
+        data = {
+            "basic" : {"target" : "Enemy", "hitType" : "single"},
+            "skill" : {"target" : "Ally", "hitType" : "all"},
+            "ultimate" : {"target" : "Enemy", "hitType" : "single"}
+        }
+        return data[grep]
+    
     def actionDetect(self, actionType, actionChar):
         if actionType == "hit":
             self.addBlindBet(1)
