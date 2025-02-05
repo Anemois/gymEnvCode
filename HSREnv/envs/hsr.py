@@ -15,9 +15,9 @@ retake adveturine action and enemy action - done
 energy display - done
 target choice display better - done
 '''
-class HSR:
-    def __init__(self, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
-        random.seed(datetime.now().timestamp())        
+class HSR():
+    def __init__(self, seed = -1, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+        random.seed(datetime.now().timestamp() if seed == -1 else seed)        
         self.reward = 0
 
         self._initChars(charNames)
@@ -383,7 +383,7 @@ class HSR:
         for enemy in self.enemies[self.wave]:
             obs["EnemyData"].append(enemy.hp/300000)
             obs["EnemyData"].append(enemy.getWeakness())
-        return np.array(obs)
+        return obs
 
     def _initPygame(self):
         pygame.init()
