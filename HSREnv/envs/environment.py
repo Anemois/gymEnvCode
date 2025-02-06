@@ -4,11 +4,11 @@ import numpy as np
 from HSREnv.envs.hsr import HSR
 class Environment(gym.Env):
     #metadata = {"render_modes": ["human", "robot"], 'render_fps': 4}
-    def __init__(self):
+    def __init__(self, render_mode = None):
         self.game = HSR()
         #action : [ult1, ult2, ult3, ult4, basic, skill]
         #target : []
-        self.action_space = spaces.Dict({"action" : spaces.Discrete(6), "target" : spaces.Discrete(5)})
+        self.action_space = spaces.MultiDiscrete([4,5])
         #
         self.observation_space = spaces.Dict({"AllyUlts" : spaces.MultiBinary(4),
                                               "EnemyHp": spaces.Box(low=0.0, high=1.0,shape=(5,), dtype=np.float64),
@@ -26,7 +26,7 @@ class Environment(gym.Env):
     def actionInterpreter(self, act):
         action = ["ultimate1", "ultimate2", "ultimate3", "ultimate4", "basic", "skill"]
         target = [0, 1, 2, 3, 4]
-        return {"action" : action[act["action"]], "target" : target[act["target"]]}
+        return {"action" : action[act[0]], "target" : target[act[0]]}
 
     def step(self, action):
         self.game.action(self.actionInterpreter(action))

@@ -292,7 +292,7 @@ class HSR():
 
     def sendSignal(self, actionType, actionChar):
         
-        print(f"{actionChar} did/got {actionType}")
+        #print(f"{actionChar} did/got {actionType}")
         '''
         for i in self.actionOrder:
             if(not isinstance(i[0], str)):
@@ -438,13 +438,13 @@ class HSR():
         self.allRects = []
         self.allTexts = []
         cwd = os.getcwd()        
-        directory = os.fsencode(cwd + "\\HSREnv\\envs\\assets")
+        directory = os.fsencode(cwd + "/HSREnv/envs/assets")
     
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
             if filename.endswith(".png") or filename.endswith(".jpg"): 
                 flname = filename[:-4]
-                self.pygameImages[flname] = pygame.image.load(directory.decode() + "\\" + filename).convert()
+                self.pygameImages[flname] = pygame.image.load(directory.decode() + "/" + filename).convert()
                 #print(flname[:3])
                 if(flname[:3] == "HSR"):
                     self.pygameImages[flname] = pygame.transform.scale(self.pygameImages[flname], (self.screenWidth, self.screenHeight))
@@ -521,6 +521,8 @@ class HSR():
                     self.screen.blit(data["text"], data["pos"])
 
     def view(self, mode = "robot"):        
+        if(self.is_done()):
+            return      
         action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
