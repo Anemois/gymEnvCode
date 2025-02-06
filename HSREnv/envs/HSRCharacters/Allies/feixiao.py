@@ -91,7 +91,7 @@ class Feixiao(AllyTemplate):
     def actionDetect(self, actionType, actionChar):
         if(actionType == "atk" and actionChar != "Enemy"):
             self.addEnergy(0.5)
-            print("ADDD", self.energy, actionChar)
+            #print("ADDD", self.energy, actionChar)
             if(self.followUp and actionChar != "Feixiao"):
                 self.followUp = False
                 self.addAction(["Feixiao", "talent", -1])

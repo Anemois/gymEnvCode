@@ -10,22 +10,33 @@ class Environment(gym.Env):
         #target : []
         self.action_space = spaces.Dict({"action" : spaces.Discrete(6), "target" : spaces.Discrete(5)})
         #
-        self.observation_space = spaces.Dict({"AllyUlts" : spaces.Discrete(4),
-                                              "EnemyData": spaces.Discrete(40)})
+        self.observation_space = spaces.Dict({"AllyUlts" : spaces.MultiBinary(4),
+                                              "EnemyHp": spaces.Box(low=0.0, high=1.0,shape=(5,), dtype=np.float64),
+                                              "EnemyWeakness" : spaces.MultiBinary([5, 7]),
+                                              "Elites" : spaces.MultiBinary(5)})
     
-    def reset(self, seed = 0, options = []):
+    def reset(self, seed = None, options = []):
         del self.game
         self.game = HSR(seed= seed)
         obs = self.game.observe()
+        for i in obs:
+            obs[i] = np.array(obs[i])
         return obs, {}
 
+    def actionInterpreter(self, act):
+        action = ["ultimate1", "ultimate2", "ultimate3", "ultimate4", "basic", "skill"]
+        target = [0, 1, 2, 3, 4]
+        return {"action" : action[act["action"]], "target" : target[act["target"]]}
+
     def step(self, action):
-        self.game.action(action)
+        self.game.action(self.actionInterpreter(action))
         obs = self.game.observe()
         reward = self.game.evaluate()
         termination = self.game.is_done()
         truncation = self.game.is_trunc()
+        for i in obs:
+            obs[i] = np.array(obs[i])
         return obs, reward, truncation, termination, {}
     
-    def render(self, mode="human"):
+    def render(self, mode="robot"):
         self.game.view(mode= mode)

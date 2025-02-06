@@ -34,13 +34,13 @@ class HSR():
             "March7"      : March7(hp=2864, atk=3222, defence=908, spd=115, critRate=0.716, critDamage=2.349)
         }
         self.charNames = charNames
-        self.charNames.insert(0, "BLANK")
+        if(self.charNames[0] != "BLANK"):
+            self.charNames.insert(0, "BLANK")
         
         for charName in self.charNames:
             try:
-                if(charName == "BLANK"):
-                    continue
-                self._characters[charName]
+                if(charName != "BLANK"):
+                    self._characters[charName]
             except KeyError:
                 print("Character Name Initialization Error\nPlease Give Valid Character Names")
             
@@ -143,10 +143,13 @@ class HSR():
             return -1
         else:
             dmg = 0
-            if(target.toughness > 0):
-                target.toughness = max(0, target.toughness - toughnessDamage)
-                if(target.toughness == 0):
-                    dmg += 5000 
+            try:
+                if(target.toughness > 0):
+                    target.toughness = max(0, target.toughness - toughnessDamage)
+                    if(target.toughness == 0):
+                        dmg += 5000 
+            except AttributeError:
+                print(base, element, toughnessDamage, effects, char, target)
 
             for effect in effects:
                 self.debuffEnemy(effect, target)
@@ -160,7 +163,7 @@ class HSR():
                     if(random.random() >= char.getCritRate() + target.getCritRateDebuff()):
                         follow += follow * (char.getCritDamage() + target.getCritDamageDebuff())
                     dmg += follow 
-                    print("roibnULT", follow)
+                    #print("roibnULT", follow)
 
             if(target.hp == 0):
                 return -1
@@ -204,11 +207,10 @@ class HSR():
 
         if(data["target"] == "Enemy"):
             if(data["hitType"] == "single"):
-                target = self.enemies[self.wave][targetIndex]
                 for i in range(data["hits"]):
-                    if(target.hp == 0):
-                        target = 0
-                    dmg += self.doDamage(data["base"], data["element"], data["break"], data["effects"], char, target)
+                    if(self.enemies[self.wave][targetIndex] == 0):
+                        targetIndex = 0
+                    dmg += self.doDamage(data["base"], data["element"], data["break"], data["effects"], char, self.enemies[self.wave][targetIndex])
 
             elif(data["hitType"] == "blast"):
                 targetWave = self.enemies[self.wave]
@@ -306,7 +308,7 @@ class HSR():
         if(self.is_done()):
             return
         if("ultimate" in action["action"]):
-            char = action["action"][8:]
+            char = self.charNames[int(action["action"][8:])]
             dmg = self.charGoDo(char, "ultimate", action["target"])
             self.charActionImage(char, "ultimate", dmg)
             if(char == "Robin"):
@@ -322,6 +324,7 @@ class HSR():
                     self.actionOrder.append([char, "pending", self._characters[char].calcActionValue()])
 
         elif(self.actionOrder[0][1] != "pending"):
+            print("NOTPENDING")
             if(self.isFirstChar()):
                 dmg = self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
                 self.charActionImage(self.getFirstChar(), self.actionOrder[0][1], dmg)
@@ -332,7 +335,9 @@ class HSR():
         else:
             if(self.isFirstChar()):
                 char = self.actionOrder[0][0]
+                print("----\n" + char)
                 del self.actionOrder[0]
+                print(char + "\n--------")
                 dmg = self.charGoDo(char, action["action"], action["target"])
                 self.charActionImage(char, action["action"], dmg)
 
@@ -343,6 +348,7 @@ class HSR():
                 else:
                     self.actionOrder.append([char, "pending", self._characters[char].calcActionValue()])
             else:
+                print("ENEMYYY")
                 char = self.actionOrder[0][0]
                 del self.actionOrder[0]
                 self.enemyGoDo(char, char.doAction())
@@ -356,7 +362,7 @@ class HSR():
             self.runAction()
         
         if(self.enemies[self.wave][0].hp == 0):
-            self.wave += 1
+            self.wave = min(self.wave+1, len(self.enemies)-1)
         
     def evaluate(self):
         for i in range(len(self.enemies[self.wave])):#300000
@@ -368,7 +374,7 @@ class HSR():
         return rwd
 
     def is_done(self):
-        return self.wave >= len(self.enemies)
+        return self.enemies[self.wave][0].hp == 0 and self.wave == len(self.enemies)-1
 
     def is_trunc(self):
         return False
@@ -376,13 +382,17 @@ class HSR():
     def observe(self):
         obs = {
             "AllyUlts" : [],
-            "EnemyData" : []
+            "EnemyHp" : [],
+            "EnemyWeakness" : [],
+            "Elites" : []
         }
         for i in range(1, 5):
             obs["AllyUlts"].append(self.team[i].checkUltimate())
         for enemy in self.enemies[self.wave]:
-            obs["EnemyData"].append(enemy.hp/300000)
-            obs["EnemyData"].append(enemy.getWeakness())
+            obs["EnemyHp"].append(enemy.hp/enemy.maxHp)
+            obs["EnemyWeakness"].append(enemy.getWeakness())
+            obs["Elites"].append(1 if enemy.name == "elite" else 0)
+        #print(obs)
         return obs
 
     def _initPygame(self):
@@ -510,7 +520,7 @@ class HSR():
                 if(data["layer"] == i):
                     self.screen.blit(data["text"], data["pos"])
 
-    def view(self, mode):        
+    def view(self, mode = "robot"):        
         action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
@@ -626,14 +636,15 @@ class HSR():
                 for i in range((0 if data["target"] == "Enemy" else 1), 5):
                     self.addLock(i, data["target"], enmCount)
 
-        if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
-            #print("Enemy lol")
-            self.action({"action" : "None", "target" : "None"})
-        elif(action["action"] != "None"):
-            self.action(action)
+        if(mode == "human"):
+            if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
+                #print("Enemy lol")
+                self.action({"action" : "None", "target" : "None"})
+            elif(action["action"] != "None"):
+                self.action(action)
 
-        if(self.enemies[self.wave][self.viewTarget].hp == 0):
-            self.viewTarget = 0
+            if(self.enemies[self.wave][self.viewTarget].hp == 0):
+                self.viewTarget = 0
 
         #Action Order
         first = self.actionOrder[0][0]
