@@ -16,10 +16,10 @@ energy display - done
 target choice display better - done
 '''
 class HSR():
-    def __init__(self, seed = -1, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+    def __init__(self, seed = -1, render_mode = "robot", charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
         random.seed(datetime.now().timestamp() if seed == -1 else seed)        
         self.reward = 0
-
+        self.render_mode = render_mode
         self._initChars(charNames)
         self._initEnemies(enemyData)
         self._initActionOrder()
@@ -105,7 +105,7 @@ class HSR():
                 target.debuffs[effect["name"]] = effect
 
         except KeyError:
-            pass
+            print("No buff")
 
     def buffAlly(self, effect, target):
         try:
@@ -136,12 +136,13 @@ class HSR():
         return dmg
 
     def doDamage(self, base, element, toughnessDamage, effects, char, target):
-        if(isinstance(target, str)):
+        if(isinstance(target, str)):#enemy
             self.sendSignal("hit", target)
+            self.reward += -0.01
             if(target != "Feixiao"):
                 self._characters[target].addEnergy(base)
             return -1
-        else:
+        else:#char
             dmg = 0
             try:
                 if(target.toughness > 0):
@@ -396,6 +397,8 @@ class HSR():
         return obs
 
     def _initPygame(self):
+        if(self.render_mode == "robot"):
+            return
         pygame.init()
 
         self.INF = 1000000000
@@ -473,6 +476,8 @@ class HSR():
                 continue
 
     def charActionImage(self, char, action, dmg):
+        if(self.render_mode == "robot"):
+            return
         self.charImage[char].append({"action" : action, "to" : pygame.time.get_ticks() + self.imageTime[char][action], "dmg" : dmg})
         #print(pygame.time.get_ticks())
 
@@ -520,7 +525,9 @@ class HSR():
                 if(data["layer"] == i):
                     self.screen.blit(data["text"], data["pos"])
 
-    def view(self, mode = "robot"):        
+    def view(self):
+        if(self.render_mode == "robot"):
+            return        
         if(self.is_done()):
             return      
         action = {"target" : "None", "action" : "None"}

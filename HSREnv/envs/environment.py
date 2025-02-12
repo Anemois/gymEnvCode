@@ -1,11 +1,12 @@
-import gymnasium as gym
+import gymnasium
 from gymnasium import spaces
 import numpy as np
 from HSREnv.envs.hsr import HSR
-class Environment(gym.Env):
+class Environment(gymnasium.Env):
     #metadata = {"render_modes": ["human", "robot"], 'render_fps': 4}
-    def __init__(self, render_mode = None):
-        self.game = HSR()
+    def __init__(self, render_mode = None, seed = -1, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+        super(Environment, self).__init__()
+        self.game = HSR(render_mode=render_mode, seed=seed, charNames=charNames, enemyData=enemyData)
         #action : [ult1, ult2, ult3, ult4, basic, skill]
         #target : []
         self.action_space = spaces.MultiDiscrete([4,5])
@@ -20,7 +21,10 @@ class Environment(gym.Env):
         self.game = HSR(seed= seed)
         obs = self.game.observe()
         for i in obs:
-            obs[i] = np.array(obs[i])
+            if(i == "EnemyHp"):
+                obs[i] = np.array(obs[i])
+            else:
+                obs[i] = np.array(obs[i], dtype = bool)
         return obs, {}
 
     def actionInterpreter(self, act):
@@ -35,7 +39,10 @@ class Environment(gym.Env):
         termination = self.game.is_done()
         truncation = self.game.is_trunc()
         for i in obs:
-            obs[i] = np.array(obs[i])
+            if(i == "EnemyHp"):
+                obs[i] = np.array(obs[i])
+            else:
+                obs[i] = np.array(obs[i], dtype = bool)
         return obs, reward, truncation, termination, {}
     
     def render(self, mode="robot"):
