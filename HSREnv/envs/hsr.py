@@ -16,8 +16,9 @@ energy display - done
 target choice display better - done
 '''
 class HSR():
-    def __init__(self, seed = -1, render_mode = "robot", charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
-        random.seed(datetime.now().timestamp() if seed == -1 else seed)        
+    def __init__(self, seed = None, render_mode = "robot", charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+        random.seed(datetime.now().timestamp() if seed == None else seed)
+        self.DONE = False        
         self.reward = 0
         self.render_mode = render_mode
         self._initChars(charNames)
@@ -306,8 +307,11 @@ class HSR():
             self.team[i].actionDetect(actionType, actionChar)
             
     def action(self, action, mode="human"):
+        self.invalidActionTest(action, mode)
         if(self.is_done()):
             return
+        if(self.render_mode == "display"):
+            self.viewTarget = action["target"]
         if("ultimate" in action["action"]):
             char = self.charNames[int(action["action"][8:])]
             dmg = self.charGoDo(char, "ultimate", action["target"])
@@ -336,9 +340,9 @@ class HSR():
         else:
             if(self.isFirstChar()):
                 char = self.actionOrder[0][0]
-                print("----\n" + char)
+                #print("----\n" + char)
                 del self.actionOrder[0]
-                print(char + "\n--------")
+                #print(char + "\n--------")
                 dmg = self.charGoDo(char, action["action"], action["target"])
                 self.charActionImage(char, action["action"], dmg)
 
@@ -374,8 +378,18 @@ class HSR():
         self.reward = 0
         return rwd
 
+    def invalidActionTest(self, action, mode):
+        if(mode == "human"):
+            return
+
+        ultWrong = "ultimate" in action["action"] and not self.team[int(action["action"][8:])].checkUltimate()
+        selfMarch7 = action["action"] == "skill" and self.actionOrder[0][0] == "March7" and self.charNames[action["target"]] == "March7"
+        if(ultWrong or selfMarch7):
+            self.DONE == True
+            self.reward = -1
+
     def is_done(self):
-        return self.enemies[self.wave][0].hp == 0 and self.wave == len(self.enemies)-1
+        return (self.enemies[self.wave][0].hp == 0 and self.wave == len(self.enemies)-1) or self.DONE
 
     def is_trunc(self):
         return False
@@ -544,7 +558,7 @@ class HSR():
             if(event.type == pygame.QUIT):
                 pygame.quit() # Opposite of pygame.init
                 sys.exit()
-            if(event.type == pygame.MOUSEBUTTONDOWN and mode == "human"):
+            if(event.type == pygame.MOUSEBUTTONDOWN and self.render_mode == "human"):
                 x, y = event.pos
                 for data in imageRects:
                     if(data["rect"].collidepoint(x, y)):
@@ -645,15 +659,15 @@ class HSR():
                 for i in range((0 if data["target"] == "Enemy" else 1), 5):
                     self.addLock(i, data["target"], enmCount)
 
-        if(mode == "human"):
+        if(self.render_mode == "human"):
             if(self.isFirstChar() == False or self.actionOrder[0][1] != "pending"):
                 #print("Enemy lol")
                 self.action({"action" : "None", "target" : "None"})
             elif(action["action"] != "None"):
                 self.action(action)
 
-            if(self.enemies[self.wave][self.viewTarget].hp == 0):
-                self.viewTarget = 0
+        if(self.enemies[self.wave][self.viewTarget].hp == 0):
+            self.viewTarget = 0
 
         #Action Order
         first = self.actionOrder[0][0]
@@ -673,3 +687,4 @@ class HSR():
         self._updateImages()
         pygame.display.update()
         self.deltaTime = self.fpsClock.tick(60)
+        print("successfully rendered")

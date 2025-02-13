@@ -2,6 +2,8 @@ import sys
 import numpy as np
 import gymnasium as gym
 import HSREnv
+import time
+import pygame
 from HSREnv.envs.hsr import HSR
 from HSREnv.envs.environment import Environment
 
@@ -12,7 +14,7 @@ from stable_baselines3.common.env_util import make_vec_env
 if __name__ == "__main__":
     #env = gymnasium.make("HSREnv-v1")
     #way = input("What you wanna do robot/human")
-    way = "robot"
+    way = "human"
     if(way == "robot"):
         print("im in")
         env = gym.make("HSREnv-v2", render_mode = "robot", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
@@ -24,16 +26,28 @@ if __name__ == "__main__":
 
         del model # remove to demonstrate saving and loading
 
-        model = PPO.load("HSREnv-v2")
+    elif(way == "test"):
+        env = gym.make("HSREnv-v2", render_mode = "display", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
+        model = PPO.load("HSREnv-v2", env=env)
 
-        obs = env.reset()
+        vec_env = model.get_env()
+        obs = vec_env.reset()
+        print("im in")
         while True:
             action, _states = model.predict(obs)
-            obs, rewards, dones, info = env.step(action)
-            env.render()
-                
+            obs, rewards, dones, info = vec_env.step(action)
+            vec_env.render()
+            time.sleep(1)
+            print("hi", dones)
+            if(dones[0]):
+                print("NEWWWW")
+                obs = vec_env.reset()
+
     elif(way == "human"):
-        game = HSR()
+        env = gym.make("HSREnv-v2", render_mode = "human", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
+        env.reset()
+        #game = HSR(render_mode = "human", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
         while True:
-            game.view("human")
-        
+            #game.view()
+            env.render()
+         

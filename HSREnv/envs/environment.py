@@ -6,6 +6,7 @@ class Environment(gymnasium.Env):
     #metadata = {"render_modes": ["human", "robot"], 'render_fps': 4}
     def __init__(self, render_mode = None, seed = -1, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
         super(Environment, self).__init__()
+        self.kwargs = (render_mode, seed, charNames, enemyData)
         self.game = HSR(render_mode=render_mode, seed=seed, charNames=charNames, enemyData=enemyData)
         #action : [ult1, ult2, ult3, ult4, basic, skill]
         #target : []
@@ -18,7 +19,7 @@ class Environment(gymnasium.Env):
     
     def reset(self, seed = None, options = []):
         del self.game
-        self.game = HSR(seed= seed)
+        self.game = HSR(render_mode=self.kwargs[0], seed=self.kwargs[1], charNames=self.kwargs[2], enemyData=self.kwargs[3])
         obs = self.game.observe()
         for i in obs:
             if(i == "EnemyHp"):
@@ -45,5 +46,5 @@ class Environment(gymnasium.Env):
                 obs[i] = np.array(obs[i], dtype = bool)
         return obs, reward, truncation, termination, {}
     
-    def render(self, mode="robot"):
-        self.game.view(mode= mode)
+    def render(self):
+        self.game.view()
