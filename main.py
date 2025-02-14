@@ -10,11 +10,12 @@ from HSREnv.envs.environment import Environment
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.evaluation import evaluate_policy
 
 if __name__ == "__main__":
     #env = gymnasium.make("HSREnv-v1")
     #way = input("What you wanna do robot/human")
-    way = "human"
+    way = "test"
     if(way == "robot"):
         print("im in")
         env = gym.make("HSREnv-v2", render_mode = "robot", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
@@ -27,21 +28,23 @@ if __name__ == "__main__":
         del model # remove to demonstrate saving and loading
 
     elif(way == "test"):
-        env = gym.make("HSREnv-v2", render_mode = "display", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
-        model = PPO.load("HSREnv-v2", env=env)
+        env = gym.make("HSREnv-v2", render_mode = "rgb_array", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
+        model = PPO.load(path="HSREnv-v2", env=env)
 
         vec_env = model.get_env()
+        print(type(vec_env))
         obs = vec_env.reset()
-        print("im in")
+        mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
+        print("im in", mean_reward, std_reward)
         while True:
             action, _states = model.predict(obs)
+            #print(vec_env.render(mode='rgb_array'))
             obs, rewards, dones, info = vec_env.step(action)
-            vec_env.render()
             time.sleep(1)
-            print("hi", dones)
+            print("hi", dones, info)
             if(dones[0]):
                 print("NEWWWW")
-                obs = vec_env.reset()
+                obs = vec_env.close()
 
     elif(way == "human"):
         env = gym.make("HSREnv-v2", render_mode = "human", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])

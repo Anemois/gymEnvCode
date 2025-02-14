@@ -19,6 +19,7 @@ class HSR():
     def __init__(self, seed = None, render_mode = "robot", charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
         random.seed(datetime.now().timestamp() if seed == None else seed)
         self.DONE = False        
+        self.info = []
         self.reward = 0
         self.render_mode = render_mode
         self._initChars(charNames)
@@ -308,6 +309,7 @@ class HSR():
             
     def action(self, action, mode="human"):
         self.invalidActionTest(action, mode)
+        self.addInfo("Action time")
         if(self.is_done()):
             return
         if(self.render_mode == "display"):
@@ -375,7 +377,6 @@ class HSR():
             self.lastHp[i] = self.enemies[self.wave][i].hp
 
         rwd = self.reward
-        self.reward = 0
         return rwd
 
     def invalidActionTest(self, action, mode):
@@ -386,7 +387,7 @@ class HSR():
         selfMarch7 = action["action"] == "skill" and self.actionOrder[0][0] == "March7" and self.charNames[action["target"]] == "March7"
         if(ultWrong or selfMarch7):
             self.DONE == True
-            self.reward = -1
+            self.reward = -100
 
     def is_done(self):
         return (self.enemies[self.wave][0].hp == 0 and self.wave == len(self.enemies)-1) or self.DONE
@@ -543,7 +544,9 @@ class HSR():
         if(self.render_mode == "robot"):
             return        
         if(self.is_done()):
+            self.addInfo("Ehh Na")
             return      
+        
         action = {"target" : "None", "action" : "None"}
         imageRects = []
         for img in self.allImages:
@@ -686,5 +689,15 @@ class HSR():
         #update
         self._updateImages()
         pygame.display.update()
-        self.deltaTime = self.fpsClock.tick(60)
-        print("successfully rendered")
+        if(self.render_mode == "human"):
+            self.deltaTime = self.fpsClock.tick(60)
+        self.addInfo("HEY I RENDERED")
+
+    def getInfo(self):
+        info = self.info
+        self.info = []
+        return {"reward" : self.reward,
+                "info" : info}
+
+    def addInfo(self, txt):
+        self.info.append(txt)

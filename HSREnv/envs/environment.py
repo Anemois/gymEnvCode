@@ -2,9 +2,10 @@ import gymnasium
 from gymnasium import spaces
 import numpy as np
 from HSREnv.envs.hsr import HSR
+from typing import Optional
 class Environment(gymnasium.Env):
-    #metadata = {"render_modes": ["human", "robot"], 'render_fps': 4}
-    def __init__(self, render_mode = None, seed = -1, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
+    metadata = {"render_modes": ["human", "robot", "rgb_array"], 'render_fps': 10}
+    def __init__(self, render_mode: Optional[str] = None, seed = None, charNames = ["Feixiao", "Adventurine", "Robin", "March7"], enemyData = {"waves" : 3, "basicEnemy" : 4, "eliteEnemy" : 1, "basicData" : ["random", "random", "random", "random"], "eliteData" : ["random"]}):
         super(Environment, self).__init__()
         self.kwargs = (render_mode, seed, charNames, enemyData)
         self.game = HSR(render_mode=render_mode, seed=seed, charNames=charNames, enemyData=enemyData)
@@ -44,7 +45,11 @@ class Environment(gymnasium.Env):
                 obs[i] = np.array(obs[i])
             else:
                 obs[i] = np.array(obs[i], dtype = bool)
-        return obs, reward, truncation, termination, {}
+        
+        if self.render_mode == "human" or "rgb_array":
+            self.render()
+
+        return obs, reward, truncation, termination, self.game.getInfo()
     
     def render(self):
         self.game.view()
