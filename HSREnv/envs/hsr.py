@@ -307,9 +307,9 @@ class HSR():
         for i in range(1, 5):
             self.team[i].actionDetect(actionType, actionChar)
             
-    def action(self, action, mode="human"):
-        self.invalidActionTest(action, mode)
-        self.addInfo("Action time")
+    def action(self, action):
+        self.invalidActionTest(action)
+        self.addInfo(f"done? : {self.is_done()}")
         if(self.is_done()):
             return
         if(self.render_mode == "display"):
@@ -379,8 +379,8 @@ class HSR():
         rwd = self.reward
         return rwd
 
-    def invalidActionTest(self, action, mode):
-        if(mode == "human"):
+    def invalidActionTest(self, action):
+        if(self.render_mode == "human"):
             return
 
         ultWrong = "ultimate" in action["action"] and not self.team[int(action["action"][8:])].checkUltimate()
@@ -544,7 +544,7 @@ class HSR():
         if(self.render_mode == "robot"):
             return        
         if(self.is_done()):
-            self.addInfo("Ehh Na")
+            #self.addInfo("Ehh Na")
             return      
         
         action = {"target" : "None", "action" : "None"}
@@ -691,7 +691,7 @@ class HSR():
         pygame.display.update()
         if(self.render_mode == "human"):
             self.deltaTime = self.fpsClock.tick(60)
-        self.addInfo("HEY I RENDERED")
+        #self.addInfo("HEY I RENDERED")
 
     def getInfo(self):
         info = self.info

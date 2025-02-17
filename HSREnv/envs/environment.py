@@ -49,7 +49,10 @@ class Environment(gymnasium.Env):
         if self.render_mode == "human" or "rgb_array":
             self.render()
 
-        return obs, reward, truncation, termination, self.game.getInfo()
+        info = self.game.getInfo()
+        info["Action Taken"] = self.actionInterpreter(action)
+
+        return obs, reward, truncation, termination, info
     
     def render(self):
         self.game.view()

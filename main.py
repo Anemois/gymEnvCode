@@ -15,14 +15,14 @@ from stable_baselines3.common.evaluation import evaluate_policy
 if __name__ == "__main__":
     #env = gymnasium.make("HSREnv-v1")
     #way = input("What you wanna do robot/human")
-    way = "test"
+    way = "robot"
     if(way == "robot"):
         print("im in")
         env = gym.make("HSREnv-v2", render_mode = "robot", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
         check_env(env)
         print("starting to learn")
         model = PPO("MultiInputPolicy", env, verbose=1)
-        model.learn(total_timesteps=25000)
+        model.learn(total_timesteps=1000000)
         model.save("HSREnv-v2")
 
         del model # remove to demonstrate saving and loading
@@ -32,10 +32,10 @@ if __name__ == "__main__":
         model = PPO.load(path="HSREnv-v2", env=env)
 
         vec_env = model.get_env()
-        print(type(vec_env))
+        print(type(vec_env)) 
         obs = vec_env.reset()
-        mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
-        print("im in", mean_reward, std_reward)
+        #mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
+        #print("im in", mean_reward, std_reward)
         while True:
             action, _states = model.predict(obs)
             #print(vec_env.render(mode='rgb_array'))
