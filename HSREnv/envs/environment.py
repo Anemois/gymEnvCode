@@ -11,28 +11,40 @@ class Environment(gymnasium.Env):
         self.game = HSR(render_mode=render_mode, seed=seed, charNames=charNames, enemyData=enemyData)
         #action : [ult1, ult2, ult3, ult4, basic, skill]
         #target : []
-        self.action_space = spaces.MultiDiscrete([4,5])
+        self.action_space = spaces.MultiDiscrete([6,5])
         #
         self.observation_space = spaces.Dict({"AllyUlts" : spaces.MultiBinary(4),
                                               "EnemyHp": spaces.Box(low=0.0, high=1.0,shape=(5,), dtype=np.float64),
                                               "EnemyWeakness" : spaces.MultiBinary([5, 7]),
-                                              "Elites" : spaces.MultiBinary(5)})
+                                              "Elites" : spaces.MultiBinary(5),
+                                              "ActionOrder" : spaces.MultiDiscrete([6, 6])})
     
     def reset(self, seed = None, options = []):
         del self.game
         self.game = HSR(render_mode=self.kwargs[0], seed=self.kwargs[1], charNames=self.kwargs[2], enemyData=self.kwargs[3])
         obs = self.game.observe()
         for i in obs:
-            if(i == "EnemyHp"):
+            if(i == "EnemyHp" or i == "ActionOrder"):
                 obs[i] = np.array(obs[i])
             else:
                 obs[i] = np.array(obs[i], dtype = bool)
         return obs, {}
 
+    def validActionMask(self):
+        mask = [[0,0,0,0,1,1],[1,1,1,1,1]]
+        obs = self.game.observe()
+        for i in range(4):
+            mask[0][i] = obs["AllyUlts"][i]
+        flattenMask = []
+        for i in mask:
+            for j in i:
+                flattenMask.append(j)
+        return flattenMask
+
     def actionInterpreter(self, act):
         action = ["ultimate1", "ultimate2", "ultimate3", "ultimate4", "basic", "skill"]
         target = [0, 1, 2, 3, 4]
-        return {"action" : action[act[0]], "target" : target[act[0]]}
+        return {"action" : action[act[0]], "target" : target[act[1]]}
 
     def step(self, action):
         self.game.action(self.actionInterpreter(action))
@@ -41,7 +53,7 @@ class Environment(gymnasium.Env):
         termination = self.game.is_done()
         truncation = self.game.is_trunc()
         for i in obs:
-            if(i == "EnemyHp"):
+            if(i == "EnemyHp" or i == "ActionOrder"):
                 obs[i] = np.array(obs[i])
             else:
                 obs[i] = np.array(obs[i], dtype = bool)

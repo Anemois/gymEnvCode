@@ -56,7 +56,6 @@ class March7(AllyTemplate):
             self.checkCharge()
         else:
             self.addEnergy(35)
-            self.actionSignal("March7", "atk")
             hits = 3 if self.SUPERCHARGED else 5
             for i in range(3):
                 if (0.6 if self.SUPERCHARGED else 0.8) >= random.random():

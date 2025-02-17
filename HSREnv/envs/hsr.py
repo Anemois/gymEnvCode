@@ -331,7 +331,7 @@ class HSR():
                     self.actionOrder.append([char, "pending", self._characters[char].calcActionValue()])
 
         elif(self.actionOrder[0][1] != "pending"):
-            print("NOTPENDING")
+            #print("NOTPENDING")
             if(self.isFirstChar()):
                 dmg = self.charGoDo(self.actionOrder[0][0], self.actionOrder[0][1], self.lastTarget)
                 self.charActionImage(self.getFirstChar(), self.actionOrder[0][1], dmg)
@@ -355,7 +355,7 @@ class HSR():
                 else:
                     self.actionOrder.append([char, "pending", self._characters[char].calcActionValue()])
             else:
-                print("ENEMYYY")
+                #print("ENEMYYY")
                 char = self.actionOrder[0][0]
                 del self.actionOrder[0]
                 self.enemyGoDo(char, char.doAction())
@@ -386,7 +386,7 @@ class HSR():
         ultWrong = "ultimate" in action["action"] and not self.team[int(action["action"][8:])].checkUltimate()
         selfMarch7 = action["action"] == "skill" and self.actionOrder[0][0] == "March7" and self.charNames[action["target"]] == "March7"
         if(ultWrong or selfMarch7):
-            self.DONE == True
+            self.DONE = True
             self.reward = -100
 
     def is_done(self):
@@ -400,7 +400,8 @@ class HSR():
             "AllyUlts" : [],
             "EnemyHp" : [],
             "EnemyWeakness" : [],
-            "Elites" : []
+            "Elites" : [],
+            "ActionOrder" : []
         }
         for i in range(1, 5):
             obs["AllyUlts"].append(self.team[i].checkUltimate())
@@ -408,6 +409,13 @@ class HSR():
             obs["EnemyHp"].append(enemy.hp/enemy.maxHp)
             obs["EnemyWeakness"].append(enemy.getWeakness())
             obs["Elites"].append(1 if enemy.name == "elite" else 0)
+
+        for i in range(2):
+            if(self.isFirstChar()):
+                obs["ActionOrder"].append(self.charNames.index(self.actionOrder[0][0]))
+            else:
+                obs["ActionOrder"].append(4 if self.actionOrder[0][0].name == "basic" else 5)
+
         #print(obs)
         return obs
 
@@ -696,8 +704,15 @@ class HSR():
     def getInfo(self):
         info = self.info
         self.info = []
+        actionInfo = ""
+        for char in self.actionOrder:
+            if(isinstance(char[0], str)):
+                actionInfo += f" - {[char[0], char[2]]}"
+            else:
+                actionInfo += f" - {[char[0].name, char[2]]}"
         return {"reward" : self.reward,
-                "info" : info}
+                "info" : info,
+                "------------------------ LEGIT Action Values" : actionInfo}
 
     def addInfo(self, txt):
         self.info.append(txt)
