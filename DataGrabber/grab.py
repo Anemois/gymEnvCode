@@ -1,6 +1,7 @@
 import pyautogui as pg
 import numpy as np
 import cv2
+import os
 
 '''
 things to grab:
@@ -14,14 +15,23 @@ things to grab:
 class DataGrabber():
     def __init__(self, chars = ["Feixiao", "Adventurine", "Robin", "March7"]):
         self.initUltPos()
-        self.initSPPos()
+        self.initSpPos()
+        self.cwd = os.getcwd()
         self.screen = self.screenshot()
+        self.scrX, self.scrY = pg.size()
 
     def initUltPos(self):
-        pass
+        self.ultPos = [[self.scrX*252//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                       [self.scrX*480//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                       [self.scrX*704//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                       [self.scrX*930//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080]]
 
-    def initSPPos(self):
-        pass
+    def initSpPos(self):
+        self.spPos = [[self.scrX*1448//1920, self.scrY*968//1080], [self.scrX*1466//1920, self.scrY*968//1080], 
+                      [self.scrX*1484//1920, self.scrY*968//1080], [self.scrX*1502//1920, self.scrY*968//1080], 
+                      [self.scrX*1521//1920, self.scrY*968//1080], 
+                      [self.scrX*1448//1920, self.scrY*942//1080], [self.scrX*1466//1920, self.scrY*942//1080]]
+        self.spColor = (255, 255, 255)
 
     def screenshot(self, path = None):
         if(path == None):
@@ -33,7 +43,7 @@ class DataGrabber():
                 print("Invalid Path Given")
 
     def grabAllyUlts(self):
-        
+        pass
 
     def grabEnemyHp(self):
         pass
