@@ -19,6 +19,7 @@ def mask_fn(env: gym.Env) -> np.ndarray:
     return env.validActionMask()
 
 if __name__ == "__main__":
+    
     #env = gymnasium.make("HSREnv-v1")
     #way = input("What you wanna do robot/human")
     way = "test"
