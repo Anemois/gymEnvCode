@@ -50,7 +50,8 @@ class March7(AllyTemplate):
                              "maxStack" : 5,
                              "stack" : 1,
                              "deleteOthers" : True,
-                             "on/off" : "on"}]
+                             "on/off" : "on"}],
+                "SP" : 1
             }
             self.actionSignal(actionData)  
             self.checkCharge()
@@ -82,7 +83,8 @@ class March7(AllyTemplate):
                              "maxStack" : 5,
                              "stack" : 1,
                              "deleteOthers" : True,
-                             "on/off" : "on"}]
+                             "on/off" : "on"}],
+                "SP" : 0
             }
             if supercharge:
                 self.critDamage -= 0.5
@@ -111,7 +113,8 @@ class March7(AllyTemplate):
                          "maxStack" : 1,
                          "stack" : 1,
                          "deleteOthers" : True,
-                         "on/off" : "on"}]
+                         "on/off" : "on"}],
+            "SP" : -1
         }
         self.actionSignal(actionData)
 
@@ -136,7 +139,8 @@ class March7(AllyTemplate):
                          "maxStack" : 5,
                          "stack" : 1,
                          "deleteOthers" : True,
-                         "on/off" : "on"}]
+                         "on/off" : "on"}],
+            "SP" : 0
         }
         self.actionSignal(actionData)
 
@@ -160,7 +164,8 @@ class March7(AllyTemplate):
                          "maxStack" : 5,
                          "stack" : 1,
                          "deleteOthers" : True,
-                         "on/off" : "on"}]
+                         "on/off" : "on"}],
+            "SP" : 0
         }
         self.actionSignal(actionData)
         self.checkCharge()

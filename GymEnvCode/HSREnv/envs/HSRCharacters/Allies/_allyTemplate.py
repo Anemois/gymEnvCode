@@ -24,7 +24,8 @@ class AllyTemplate():
 
         self.defIgnore = 0
         self.resPEN = 0
-
+        
+        self.maxSP = 5
         #random.seed(datetime.now().timestamp())
 
         self.updates = []

@@ -56,7 +56,9 @@ class Robin(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "off"}]}
+                             "on/off" : "off"}],
+            "SP" : 0
+            }
 
             self.actionSignal(actionData)
 
@@ -71,7 +73,8 @@ class Robin(AllyTemplate):
             "base": self.getAttack() * 1,
             "element": ["physical"],
             "break": 10,
-            "effects": {}
+            "effects": {},
+            "SP" : 1
         }
         self.actionSignal(actionData)
 
@@ -98,7 +101,9 @@ class Robin(AllyTemplate):
                           "maxStack" : 1,
                           "stack" : 1,
                           "deleteOthers" : False,
-                          "on/off" : "on"}]}
+                          "on/off" : "on"}],
+            "SP" : -1
+            }
         self.actionSignal(actionData)
 
     def ultimate(self):
@@ -129,7 +134,9 @@ class Robin(AllyTemplate):
                           "maxStack" : 1,
                           "stack" : 1,
                           "deleteOthers" : False,
-                          "on/off" : "on"}]}
+                          "on/off" : "on"}],
+            "SP" : 0
+            }
         self.actionSignal(actionData)
     
     def grep(self, grep):
@@ -170,7 +177,9 @@ class Robin(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "off"}]}
+                             "on/off" : "off"}],
+                "SP" : 0
+            }
             self.actionSignal(actionData)
 
         if actionType == "start":
@@ -199,5 +208,7 @@ class Robin(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "on"}]}
+                             "on/off" : "on"}],
+            "SP" : 0
+            }
             self.actionSignal(actionData)

@@ -51,6 +51,11 @@ class HSR():
         
         self.lastTarget = 0
         self.lastHp = [0, 0, 0, 0, 0]
+        self.skillPoints = 3
+        self.maxSP = 0
+        for char in self.team:
+            if(char != "BLANK"):
+                self.maxSP = max(self.maxSP, char.maxSP)
 
     def _initEnemies(self, enemyData):
         self.wave = 0
@@ -201,6 +206,7 @@ class HSR():
                     self.sendSignal(data["actionType"], data["char"])
                 else:
                     self.sendSignal(data[0], data[1])
+                
             elif(update[0] == "addAction"):
                 for i in range(len(self.actionOrder)):
                     if(update[1][2] <= self.actionOrder[0][2]):
@@ -251,6 +257,7 @@ class HSR():
                     for i in range(1, 5):
                         self.buffAlly(effect, self.team[i])
 
+        self.skillPoints = max(0, min(self.maxSP, self.skillPoints + data["SP"]))
         return dmg
     
     def enemyGoDo(self, enemy, action):
@@ -401,7 +408,8 @@ class HSR():
             "EnemyHp" : [],
             "EnemyWeakness" : [],
             "Elites" : [],
-            "ActionOrder" : []
+            "ActionOrder" : [],
+            "SkillPoints" : self.skillPoints
         }
         for i in range(1, 5):
             obs["AllyUlts"].append(self.team[i].checkUltimate())
@@ -415,7 +423,6 @@ class HSR():
                 obs["ActionOrder"].append(self.charNames.index(self.actionOrder[0][0]))
             else:
                 obs["ActionOrder"].append(4 if self.actionOrder[0][0].name == "basic" else 5)
-
         #print(obs)
         return obs
 
@@ -464,7 +471,7 @@ class HSR():
         self.allRects = []
         self.allTexts = []
         cwd = os.getcwd()        
-        directory = os.fsencode(cwd + "/HSREnv/envs/assets")
+        directory = os.fsencode(cwd + "/GymEnvCode/HSREnv/envs/assets")
     
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
@@ -590,7 +597,7 @@ class HSR():
                                 if(self.hover["skill"] == False):
                                     self.hover["basic"] = False
                                     self.hover["skill"] = True
-                                else:
+                                elif(self.skillPoints > 0):
                                     action = {"action" : f"skill", "target" : self.viewTarget}
                         elif("Enemy" not in data["name"] and "pose" in data["name"] and not targetEnemy):
                             self.viewTarget = data["index"]
@@ -693,6 +700,9 @@ class HSR():
             self.addImage(self.pygameImages[f"{second}_actionOrder_small"], self.actionOrderPos[1], 1, f"{second}_actionOrder_small", 1)
         else:
             self.addImage(self.pygameImages[f"Enemy_actionOrder_small"], self.actionOrderPos[1], 1, f"{second}_actionOrder_small", 1)
+
+        #Skill Points
+        self.addText(f"SP : {self.skillPoints}/{self.maxSP}", 3, (905, 480), "small")
 
         #update
         self._updateImages()

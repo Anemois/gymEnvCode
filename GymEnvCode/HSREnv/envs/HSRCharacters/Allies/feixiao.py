@@ -28,7 +28,8 @@ class Feixiao(AllyTemplate):
             "base": self.getAttack() * 1,
             "element": ["wind"],
             "break": 10,
-            "effects": {}
+            "effects": {},
+            "SP" : 1
         }
         self.actionSignal(actionData)
     
@@ -44,7 +45,8 @@ class Feixiao(AllyTemplate):
             "base": self.getAttack() * 2,
             "element": ["wind"],
             "break": 20,
-            "effects": {}
+            "effects": {},
+            "SP" : -1
         }    
         self.actionSignal(actionData)    
         self.addAction(["Feixiao", "talent", -1])
@@ -61,7 +63,8 @@ class Feixiao(AllyTemplate):
             "base": self.getAttack() * 7,
             "element": ["wind"],
             "break": 60,
-            "effects": {}
+            "effects": {},
+            "SP" : 0
         }
         self.actionSignal(actionData)
 
@@ -76,7 +79,8 @@ class Feixiao(AllyTemplate):
             "base": self.getAttack() * 1.1,
             "element": ["wind"],
             "break": 5,
-            "effects": {}
+            "effects": {},
+            "SP" : 0
         }
         self.actionSignal(actionData) 
     

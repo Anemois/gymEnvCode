@@ -3,7 +3,6 @@ from HSREnv import envs
  
 register(
     id='HSREnv-v2',
-    entry_point='HSREnv.envs:Environment',
-    max_episode_steps=500
+    entry_point='HSREnv.envs:Environment'
 )
  

@@ -32,7 +32,8 @@ class Adventurine(AllyTemplate):
             "base": self.getDefence(),
             "element": ["imaginary"],
             "break": 10,
-            "effects": {}
+            "effects": {},
+            "SP" : 1
         }
         self.actionSignal(actionData)    
 
@@ -48,7 +49,8 @@ class Adventurine(AllyTemplate):
             "base": self.getDefence() * 0.24 + 320,
             "element": ["none"],
             "break": 0,
-            "effects": {}
+            "effects": {},
+            "SP" : -1
         }
         self.actionSignal(actionData)    
 
@@ -74,7 +76,8 @@ class Adventurine(AllyTemplate):
                              "maxStack" : 1,
                              "stack" : 1,
                              "deleteOthers" : False,
-                             "on/off" : "on"}]
+                             "on/off" : "on"}],
+            "SP" : 0
         }
         self.actionSignal(actionData)    
 
@@ -90,7 +93,8 @@ class Adventurine(AllyTemplate):
             "base": self.getDefence() * 0.25,
             "element": ["imaginary"],
             "break": 3,
-            "effects": {}
+            "effects": {},
+            "SP" : 0
         }
         self.actionSignal(actionData)    
 

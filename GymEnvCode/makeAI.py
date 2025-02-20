@@ -1,13 +1,14 @@
 import sys
+import os
 import numpy as np
 import gymnasium as gym
 import HSREnv
 import time
 import pygame
-from HSREnv.envs.hsr import HSR
-from HSREnv.envs.environment import Environment
+from GymEnvCode.HSREnv.envs.hsr import HSR
+from GymEnvCode.HSREnv.envs.environment import Environment
 
-from sb3_contrib import MaskablePPO
+from sb3_contrib.ppo_mask import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
 from sb3_contrib.common.maskable.policies import MaskableMultiInputActorCriticPolicy
 from stable_baselines3.common.env_checker import check_env
@@ -19,10 +20,9 @@ def mask_fn(env: gym.Env) -> np.ndarray:
     return env.validActionMask()
 
 if __name__ == "__main__":
-    
     #env = gymnasium.make("HSREnv-v1")
     #way = input("What you wanna do robot/human")
-    way = "test"
+    way = "human"
     if(way == "robot"):
         print("im in")
         env = gym.make("HSREnv-v2", render_mode = "robot", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
@@ -57,10 +57,14 @@ if __name__ == "__main__":
         print("itsOver")
 
     elif(way == "human"):
-        env = gym.make("HSREnv-v2", render_mode = "human", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
+        env = gym.make("HSREnv-v2", render_mode = "human", charNames = ["Feixiao", "Robin", "Adventurine", "March7"])
+        env = env.unwrapped
         env.reset()
         #game = HSR(render_mode = "human", charNames = ["Robin", "Adventurine", "Feixiao", "March7"])
         while True:
             #game.view()
             env.render()
+            #print(env.getObs())
+            #print(env.getInfo())
+
          
