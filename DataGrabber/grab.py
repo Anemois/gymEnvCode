@@ -24,6 +24,7 @@ class DataGrabber():
 
         self.chars = chars
         self.ults = [False, False, False, False]
+        self.weaknesses = ["physical", "fire", "ice", "lightning", "wind", "quantum", "imaginary"]
 
     def initImages(self):
         self.images = {}
@@ -37,6 +38,8 @@ class DataGrabber():
                 self.images[flname] = cv2.imread(directory.decode() + "/" + filename)
                 if(self.images[flname].shape == (1920, 1080)):
                     self.images[flname] = cv2.resize(self.images[flname], (self.scrX, self.scrY))
+                #if("Weakness" in flname):
+                #    self.images[flname] = cv2.resize(self.images[flname], (self.scrX*22//1920, self.scrY*22//1080))
 
     def initUltPos(self):
         self.ultPos = [[self.scrX*252//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
@@ -141,7 +144,7 @@ class DataGrabber():
         sp = 0
         for i in range(7):
             #print(self.screen[self.spPos[i][1]][self.spPos[i][0]] - self.spColor)
-            if(self.sameColor(self.screen[self.spPos[i][1]][self.spPos[i][0]], self.spColor, 3)):
+            if(self.sameColor(self.screen[self.spPos[i][1], self.spPos[i][0]], self.spColor, 3)):
                 sp = i+1
             else:
                 break
@@ -151,7 +154,16 @@ class DataGrabber():
         pass
 
     def grabEnemyWeakness(self):
-        pass
+        weakPos = []
+        screen = self.screen
+        for weak in self.weaknesses:
+            try:        
+                for pos in pg.locateAll(self.images[f"{weak}Weakness"], screen, grayscale=True, confidence=0.8):
+                    weakPos.append([pos[0], pos[1], weak])
+            except Exception as e:
+                print("not Found", weak, ":", e, self.images[f"{weak}Weakness"].shape, screen.shape)
+        self.showImage(screen)
+        print(weakPos)
 
     def grabElites(self):
         pass
@@ -171,6 +183,7 @@ if __name__ == '__main__':
         src.screenshot(path=f'C:/Users/ryant/Desktop/Stuff/Dan_stuff/Python/hsrAI/HSRAI/DataGrabber/assets/ultGrabTest/{num}.png')
         src.grabAllyUlts(debug=False)
         sp = src.grabSp()
+        src.grabEnemyWeakness()
         print(src.ults, f"sp: {sp}")
 
     testGrab(num = 1)
