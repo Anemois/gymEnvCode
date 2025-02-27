@@ -36,11 +36,14 @@ class DataGrabber():
             if filename.endswith(".png") or filename.endswith(".jpg"): 
                 flname = filename[:-4]
                 self.images[flname] = cv2.imread(directory.decode() + "/" + filename)
-                if(self.images[flname].shape == (1920, 1080)):
+                if(self.images[flname].shape == (1080, 1920, 3)):
                     self.images[flname] = cv2.resize(self.images[flname], (self.scrX, self.scrY))
-                #if("Weakness" in flname):
-                #    self.images[flname] = cv2.resize(self.images[flname], (self.scrX*22//1920, self.scrY*22//1080))
-
+                else:
+                    sh = self.images[flname].shape
+                    #print(sh)
+                    self.images[flname] = cv2.resize(self.images[flname], (self.scrX*sh[1]//1920, self.scrY*sh[0]//1080))
+                    #print(self.images[flname].shape)
+    
     def initUltPos(self):
         self.ultPos = [[self.scrX*252//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
                        [self.scrX*480//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
@@ -155,15 +158,26 @@ class DataGrabber():
 
     def grabEnemyWeakness(self):
         weakPos = []
-        screen = self.screen
+        screen = self.screen[:500, 600:]
         for weak in self.weaknesses:
             try:        
                 for pos in pg.locateAll(self.images[f"{weak}Weakness"], screen, grayscale=True, confidence=0.8):
                     weakPos.append([pos[0], pos[1], weak])
             except Exception as e:
                 print("not Found", weak, ":", e, self.images[f"{weak}Weakness"].shape, screen.shape)
-        self.showImage(screen)
-        print(weakPos)
+        #self.showImage(screen)
+        weakPos = sorted(weakPos, key=lambda x: x[0])
+        #print(weakPos)
+        #self.showImage(screen)
+        x = -1000
+        i = -1
+        enemyWeakness = [[0,0,0,0,0,0,0], [0,0,0,0,0,0,0], [0,0,0,0,0,0,0], [0,0,0,0,0,0,0], [0,0,0,0,0,0,0]]
+        for data in weakPos:
+            i += (1 if (data[0] > x + 100) else 0)
+            x = data[0]
+            enemyWeakness[i][self.weaknesses.index(data[2])] = 1
+
+        return enemyWeakness
 
     def grabElites(self):
         pass
@@ -175,16 +189,16 @@ if __name__ == '__main__':
     src = DataGrabber()
 
     def testUltGrab(num = 1):
-        src.screenshot(path=f'C:/Users/ryant/Desktop/Stuff/Dan_stuff/Python/hsrAI/HSRAI/DataGrabber/assets/ultGrabTest/{num}.png')
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         src.grabAllyUlts(debug=True)
         print(src.ults)
 
     def testGrab(num = 1):
-        src.screenshot(path=f'C:/Users/ryant/Desktop/Stuff/Dan_stuff/Python/hsrAI/HSRAI/DataGrabber/assets/ultGrabTest/{num}.png')
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         src.grabAllyUlts(debug=False)
         sp = src.grabSp()
-        src.grabEnemyWeakness()
-        print(src.ults, f"sp: {sp}")
+        weak = src.grabEnemyWeakness()
+        print(src.ults, f"sp: {sp}", f"\nenemy weak to : {weak}")
 
     testGrab(num = 1)
     testGrab(num = 3)
