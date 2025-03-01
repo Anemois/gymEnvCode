@@ -144,8 +144,62 @@ class DataGrabber():
                 break
         return sp
 
-    def grabEnemyHp(self):
-        pass
+    def grabEnemyHp(self, debug = False):
+        hpRects = []
+
+        img = self.screen.copy()
+        img2 = img.copy()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.inRange(img, (200, 74, 50), (201, 75, 51))
+        img = img[250: 250+200, :]
+        self.showImage(img) if debug else None
+
+        contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(img2, contours, -1, (0,255,0), 1)
+
+        temp = []
+
+        for cnt in contours:
+            cnt = cnt.tolist() #sort array by x value of point
+            cnt.sort(key=lambda x: x[0][0])
+            #print(f"arg : {arg}")
+            #print(f"after arg : {cnt[arg]}")
+            temp.append(cnt)#add to list for proccessing
+
+        print("--------------------") if debug else None
+        temp.sort(key=lambda x: x[0][0][0])#sort by top left corner
+        t2 = []#to store the temporary rects
+        temp.append([[[100000000, 100000000]]])#I wont get the final rect stored in t2 so i use this to push it out(aka im lazy)
+        for cnt in temp:#find close points and add them to same box
+            print(cnt) if debug else None
+            if(len(t2) == 0 or (cnt[0][0][0] - t2[-1][0][0][0] <= 150 and abs(cnt[0][0][1] - t2[-1][0][0][1]) <= 10)):
+                t2.append(cnt)
+            else:
+                l = 100000
+                u = 100000
+                r = -1
+                d = -1
+                for cnt2 in t2:
+                    for k in cnt2:
+                        x, y = k[0][0], k[0][1]
+                        l = min(l, x)
+                        r = max(r, x)+1
+                        u = min(u, y)
+                        d = max(d, y)
+                
+                hpRects.append([l, u, r-l, d-u])
+                t2 = [cnt]
+            print("-------") if debug else None
+        
+        hpRects.sort(key=lambda x: x[0])#sort the rects from left to right again(make sure)
+        print(f"The final hp is : \n") if debug else None
+        ans = []#store answer of all rects[x, y, w, h]
+        for i in hpRects:
+            if(4 <= i[3] and i[3] <= 7):
+                ans.append(i[2])
+            print(i) if debug else None
+        print("---------------") if debug else None
+        return ans
 
     def grabEnemyWeakness(self, debug = False):
         weakPos = []
@@ -200,6 +254,11 @@ if __name__ == '__main__':
                     print(src.weaknesses[j], end=(", " if j!=6 else ""))
             print("]")
 
+    def testGrabHp(num = 1):
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
+        hp = src.grabEnemyHp(debug=False)
+        print(hp)
     #testGrab(5)
     for i in range(1, 7):
-        testGrab(num = i)
+        #testGrab(num = i)
+        testGrabHp(i)
