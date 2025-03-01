@@ -74,14 +74,15 @@ class DataGrabber():
             imageA = imageA[xywhA[1]:xywhA[1]+xywhA[3],xywhA[0]:xywhA[0]+xywhA[2]]
         if(xywhB != None):
             imageB = imageB[xywhB[1]:xywhB[1]+xywhB[3],xywhB[0]:xywhB[0]+xywhB[2]]
-        if(debug):
-            self.showImage(imageA, "A")
-            self.showImage(imageB, "B")
 
         #imageA = cv2.cvtColor(imageA, cv2.COLOR_BGR2GRAY)
         #imageB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
         err /= float(imageA.shape[0] * imageA.shape[1])
+        if(debug):
+            #self.showImage(imageA, "A")
+            #self.showImage(imageB, "B")
+            pass#print(err)
         return err
 
     def screenshot(self, path = None):
@@ -96,26 +97,23 @@ class DataGrabber():
     def _grabUltSpace(self):
         def sv(img, xywh, name):
             cv2.imwrite(f"{name}.png", img[xywh[1]:xywh[1]+xywh[3],xywh[0]:xywh[0]+xywh[2]])
-        
+            print("saved", name)
+
         for i, char in enumerate(self.chars):
-            #print(char)
-            if(f"{char}_ult_not_full" in self.images):
-                #self.showImage(self.screen)
-                #self.showImage(self.images[f"{char}_ult_not_full"])
-                sv(self.images[f"{char}_ult_not_full"], self.ultPos[i], f"{char}_ult_not_full")
-            else:
-                i = 0
-                while(f"{char}_ult_not_full_multi_{i}" in self.images):
-                    sv(self.images[f"{char}_ult_not_full_multi_{i}"], self.ultPos[i], f"{char}_ult_not_full_multi_{i}")
-                    print(i)
-                    i += 1
-            if(f"{char}_ult_full" in self.images):
-                sv(self.images[f"{char}_ult_full"], self.ultPos[i], f"{char}_ult_full")
-            else:
-                i = 0
-                while(f"{char}_ult_full_multi_{i}" in self.images):
-                    sv(self.images[f"{char}_ult_full_multi_{i}"], self.ultPos[i], f"{char}_ult_full_multi_{i}")
-                    i += 1
+            j = 0
+            while(f"to_save_ultEnergy_{char}_not_full_{j}" in self.images or f"ultEnergy_{char}_not_full_{j}" in self.images):
+                print('not :', j)
+                if(f"to_save_ultEnergy_{char}_not_full_{j}" in self.images):
+                    sv(self.images[f"to_save_ultEnergy_{char}_not_full_{j}"], self.ultPos[i], f"ultEnergy_{char}_not_full_{j}")
+                #print(i)
+                j += 1
+            j = 0
+            while(f"to_save_ultEnergy_{char}_full_{j}" in self.images or f"ultEnergy_{char}_full_{j}" in self.images):
+                print('is :', j)
+                if(f"to_save_ultEnergy_{char}_full_{j}" in self.images):
+                    sv(self.images[f"to_save_ultEnergy_{char}_full_{j}"], self.ultPos[i], f"ultEnergy_{char}_full_{j}")
+                #print(i)
+                j += 1
 
     def grabAllyUlts(self, debug = False):
         for i, char in enumerate(self.chars):
@@ -123,24 +121,17 @@ class DataGrabber():
             mseFull = 10000000
             mseNotFull = 10000000
             #print(char)
-            if(f"{char}_ult_not_full" in self.images):
-                #self.showImage(self.screen)
-                #self.showImage(self.images[f"{char}_ult_not_full"])
-                mseNotFull = self.mse(self.screen, self.images[f"{char}_ult_not_full"], xywhA=self.ultPos[i], debug=debug)
-            else:
-                j = 0
-                while(f"{char}_ult_not_full_multi_{j}" in self.images):
-                    mseNotFull = min(mseNotFull, self.mse(self.screen, self.images[f"{char}_ult_not_full_multi_{i}"], xywhA=self.ultPos[i], debug=debug))
-                    #print(i)
-                    j += 1
-            if(f"{char}_ult_full" in self.images):
-                mseFull = self.mse(self.screen, self.images[f"{char}_ult_full"], xywhA=self.ultPos[i], debug=debug)
-            else:
-                j = 0
-                while(f"{char}_ult_full_multi_{j}" in self.images):
-                    mseFull = min(mseNotFull, self.mse(self.screen, self.images[f"{char}_ult_full_multi_{i}"], xywhA=self.ultPos[i], debug=debug))
-                    j += 1
-            #print(char, mseFull, mseNotFull)
+            j = 0
+            while(f"ultEnergy_{char}_not_full_{j}" in self.images):
+                mseNotFull = min(mseNotFull, self.mse(self.screen, self.images[f"ultEnergy_{char}_not_full_{j}"], xywhA=self.ultPos[i], debug=debug))
+                #print(i)
+                j += 1
+            j = 0
+            while(f"ultEnergy_{char}_full_{j}" in self.images):
+                mseFull = min(mseFull, self.mse(self.screen, self.images[f"ultEnergy_{char}_full_{j}"], xywhA=self.ultPos[i], debug=debug))
+                j += 1
+            if(debug):
+                print(char, mseFull, mseNotFull)
             self.ults[i] = mseFull < mseNotFull
 
     def grabSp(self):
@@ -156,15 +147,18 @@ class DataGrabber():
     def grabEnemyHp(self):
         pass
 
-    def grabEnemyWeakness(self):
+    def grabEnemyWeakness(self, debug = False):
         weakPos = []
         screen = self.screen[:500, 600:]
         for weak in self.weaknesses:
             try:        
-                for pos in pg.locateAll(self.images[f"{weak}Weakness"], screen, grayscale=True, confidence=0.8):
+                for pos in pg.locateAll(self.images[f"weakness_{weak}"], screen, grayscale=True, confidence=0.7):
+                    weakPos.append([pos[0], pos[1], weak])
+                for pos in pg.locateAll(self.images[f"weakness_{weak}_light"], screen, grayscale=True, confidence=0.7):
                     weakPos.append([pos[0], pos[1], weak])
             except Exception as e:
-                print("not Found", weak, ":", e, self.images[f"{weak}Weakness"].shape, screen.shape)
+                if(debug):
+                    print("not Found", weak, ":", e, self.images[f"weakness_{weak}"].shape, screen.shape)
         #self.showImage(screen)
         weakPos = sorted(weakPos, key=lambda x: x[0])
         #print(weakPos)
@@ -197,8 +191,15 @@ if __name__ == '__main__':
         src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         src.grabAllyUlts(debug=False)
         sp = src.grabSp()
-        weak = src.grabEnemyWeakness()
-        print(src.ults, f"sp: {sp}", f"\nenemy weak to : {weak}")
+        weak = src.grabEnemyWeakness(debug=True)
+        print(src.ults, f"sp: {sp}")
+        for i in range(5):
+            print(f"enemy{i} weak to [", end="")
+            for j in range(7):
+                if(weak[i][j] == 1):
+                    print(src.weaknesses[j], end=(", " if j!=6 else ""))
+            print("]")
 
-    testGrab(num = 1)
-    testGrab(num = 3)
+    #testGrab(5)
+    for i in range(1, 7):
+        testGrab(num = i)
