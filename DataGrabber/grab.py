@@ -18,8 +18,7 @@ class DataGrabber():
         self.scrX, self.scrY = pg.size()
         print(self.scrX, self.scrY)
         self.initImages()
-        self.initUltPos()
-        self.initSpPos()
+        self.initPos()
         self.cwd = os.getcwd()
 
         self.chars = chars
@@ -44,18 +43,27 @@ class DataGrabber():
                     self.images[flname] = cv2.resize(self.images[flname], (self.scrX*sh[1]//1920, self.scrY*sh[0]//1080))
                     #print(self.images[flname].shape)
     
-    def initUltPos(self):
-        self.ultPos = [[self.scrX*252//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
-                       [self.scrX*480//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
-                       [self.scrX*704//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
-                       [self.scrX*930//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080]]
+    def initPos(self):
+        def initUltPos():
+            self.ultPos = [[self.scrX*252//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                        [self.scrX*480//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                        [self.scrX*704//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080], 
+                        [self.scrX*930//1920, self.scrY*870//1080, self.scrX*50//1920, self.scrY*50//1080]]
 
-    def initSpPos(self):
-        self.spPos = [[self.scrX*1448//1920, self.scrY*968//1080], [self.scrX*1466//1920, self.scrY*968//1080], 
-                      [self.scrX*1484//1920, self.scrY*968//1080], [self.scrX*1502//1920, self.scrY*968//1080], 
-                      [self.scrX*1521//1920, self.scrY*968//1080], 
-                      [self.scrX*1448//1920, self.scrY*942//1080], [self.scrX*1466//1920, self.scrY*942//1080]]
-        self.spColor = (255, 255, 255)
+        def initSpPos():
+            self.spPos = [[self.scrX*1448//1920, self.scrY*968//1080], [self.scrX*1466//1920, self.scrY*968//1080], 
+                        [self.scrX*1484//1920, self.scrY*968//1080], [self.scrX*1502//1920, self.scrY*968//1080], 
+                        [self.scrX*1521//1920, self.scrY*968//1080], 
+                        [self.scrX*1448//1920, self.scrY*942//1080], [self.scrX*1466//1920, self.scrY*942//1080]]
+            self.spColor = (255, 255, 255)
+
+        def initActionOrderPos():
+            self.actionOrderPos = [[self.scrX*59//1920, self.scrY*53//1080, self.scrX*130//1920, self.scrY*65//1080], 
+                                   [self.scrX*58//1920, self.scrY*127//1080, self.scrX*114//1920, self.scrY*51//1080]]
+    
+        initUltPos()
+        initSpPos()
+        initActionOrderPos()
 
     def showImage(self, img, name = "img"):
         cv2.imshow(name, img)
@@ -79,10 +87,9 @@ class DataGrabber():
         #imageB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
         err /= float(imageA.shape[0] * imageA.shape[1])
-        if(debug):
-            #self.showImage(imageA, "A")
-            #self.showImage(imageB, "B")
-            pass#print(err)
+    
+        #self.showImage(imageA, "A") if debug else None
+        #self.showImage(imageB, "B") if debug else None
         return err
 
     def screenshot(self, path = None):
@@ -211,8 +218,7 @@ class DataGrabber():
                 for pos in pg.locateAll(self.images[f"weakness_{weak}_light"], screen, grayscale=True, confidence=0.7):
                     weakPos.append([pos[0], pos[1], weak])
             except Exception as e:
-                if(debug):
-                    print("not Found", weak, ":", e, self.images[f"weakness_{weak}"].shape, screen.shape)
+                print("not Found", weak, ":", e, self.images[f"weakness_{weak}"].shape, screen.shape) if debug else None
         #self.showImage(screen)
         weakPos = sorted(weakPos, key=lambda x: x[0])
         #print(weakPos)
@@ -230,9 +236,25 @@ class DataGrabber():
     def grabElites(self):
         pass
 
-    def grabActionOrder(self):
-        pass
-
+    def grabActionOrder(self, debug = False):
+        actionOrder = ["Enemy", "Enemy"]
+        aop = self.actionOrderPos
+        screenBig = self.screen[aop[0][1]:aop[0][1]+aop[0][3], aop[0][0]:aop[0][0]+aop[0][2]]
+        screenSmall = self.screen[aop[1][1]:aop[1][1]+aop[1][3], aop[1][0]:aop[1][0]+aop[1][2]]
+        for char in self.chars:
+            try:
+                pg.locate(self.images[f"actionOrder_{char}_big"], screenBig, confidence=0.9)
+                actionOrder[0] = char
+            except Exception as e:
+                print("not Found", char, ":", e, self.images[f"actionOrder_{char}_big"].shape, screenBig.shape) if debug else None
+            try:
+                pg.locate(self.images[f"actionOrder_{char}_small"], screenSmall, confidence=0.9)
+                actionOrder[1] = char
+            except Exception as e:
+                print("not Found", char, ":", e, self.images[f"actionOrder_{char}_small"].shape, screenSmall.shape) if debug else None
+        
+        return actionOrder
+    
 if __name__ == '__main__':
     src = DataGrabber()
 
@@ -258,7 +280,12 @@ if __name__ == '__main__':
         src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         hp = src.grabEnemyHp(debug=False)
         print(hp)
+    
+    def testGrabActionOrder(num = 1):
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
+        actionOrder = src.grabActionOrder(debug=False)
+        print(actionOrder)
     #testGrab(5)
     for i in range(1, 7):
         #testGrab(num = i)
-        testGrabHp(i)
+        testGrabActionOrder(i)
