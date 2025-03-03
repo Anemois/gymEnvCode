@@ -9,7 +9,8 @@ things to grab:
     "EnemyHp": spaces.Box(low=0.0, high=1.0,shape=(5,), dtype=np.float64),
     "EnemyWeakness" : spaces.MultiBinary([5, 7]),
     "Elites" : spaces.MultiBinary(5),
-    "ActionOrder" : spaces.MultiDiscrete([6, 6])
+    "ActionOrder" : spaces.MultiDiscrete([6, 6]),
+    "SkillPoints" : spaces.Discrete(7)
 '''
 
 class DataGrabber():
@@ -123,6 +124,7 @@ class DataGrabber():
                 j += 1
 
     def grabAllyUlts(self, debug = False):
+        img = self.screen.copy()
         for i, char in enumerate(self.chars):
             #print(char)
             mseFull = 10000000
@@ -130,25 +132,28 @@ class DataGrabber():
             #print(char)
             j = 0
             while(f"ultEnergy_{char}_not_full_{j}" in self.images):
-                mseNotFull = min(mseNotFull, self.mse(self.screen, self.images[f"ultEnergy_{char}_not_full_{j}"], xywhA=self.ultPos[i], debug=debug))
+                mseNotFull = min(mseNotFull, self.mse(img, self.images[f"ultEnergy_{char}_not_full_{j}"], xywhA=self.ultPos[i], debug=debug))
                 #print(i)
                 j += 1
             j = 0
             while(f"ultEnergy_{char}_full_{j}" in self.images):
-                mseFull = min(mseFull, self.mse(self.screen, self.images[f"ultEnergy_{char}_full_{j}"], xywhA=self.ultPos[i], debug=debug))
+                mseFull = min(mseFull, self.mse(img, self.images[f"ultEnergy_{char}_full_{j}"], xywhA=self.ultPos[i], debug=debug))
                 j += 1
             if(debug):
                 print(char, mseFull, mseNotFull)
             self.ults[i] = mseFull < mseNotFull
+        return self.ults
 
     def grabSp(self):
         sp = 0
+        img = self.screen.copy()
         for i in range(7):
             #print(self.screen[self.spPos[i][1]][self.spPos[i][0]] - self.spColor)
-            if(self.sameColor(self.screen[self.spPos[i][1], self.spPos[i][0]], self.spColor, 3)):
+            if(self.sameColor(img[self.spPos[i][1], self.spPos[i][0]], self.spColor, 3)):
                 sp = i+1
             else:
                 break
+        self.sp = sp
         return sp
 
     def grabEnemyHp(self, debug = False):
@@ -158,7 +163,7 @@ class DataGrabber():
         img2 = img.copy()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.inRange(img, (200, 74, 50), (201, 75, 51))
-        img = img[250: 250+200, :]
+        img = img[self.scrY*250//1080: self.scrY*(250+200)//1080, :]
         self.showImage(img) if debug else None
 
         contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -206,11 +211,14 @@ class DataGrabber():
                 ans.append(i[2])
             print(i) if debug else None
         print("---------------") if debug else None
+
+        self.enemyHp = ans
+        self.hpRects = hpRects
         return ans
 
     def grabEnemyWeakness(self, debug = False):
         weakPos = []
-        screen = self.screen[:500, 600:]
+        screen = self.screen.copy()[:self.scrY*500//1080, self.scrX*600//1920:]
         for weak in self.weaknesses:
             try:        
                 for pos in pg.locateAll(self.images[f"weakness_{weak}"], screen, grayscale=True, confidence=0.7):
@@ -231,11 +239,33 @@ class DataGrabber():
             x = data[0]
             enemyWeakness[i][self.weaknesses.index(data[2])] = 1
 
+        self.enemyWeakness = enemyWeakness
+        self.weakPos = weakPos
         return enemyWeakness
 
-    def grabElites(self):
-        pass
-
+    def grabElites(self, debug = False):
+        if(len(self.enemyHp) != len(self.enemyWeakness)):
+            print(f"\n******\nSomethings Wrong... I CAN FEEL IT\n{len(self.enemyHp)}, {len(self.enemyWeakness)}\n******\n")
+            return None
+        img = self.screen.copy()[self.scrY*250//1080: self.scrY*(250+200)//1080, :]
+        elitePos = []
+        try:
+            for pos in pg.locateAll(self.images["elite_icon"], img, confidence=0.9):
+                elitePos.append(pos)
+        except Exception as e:
+            print("not Found", "elite_icon", ":", e, self.images["elite_icon"].shape, img.shape) if debug else None
+        elites = [0, 0, 0, 0, 0]
+        for ePos in elitePos:
+            pos = [10000000, -1]
+            for i, hPos in enumerate(self.hpRects):
+                if(abs(hPos[0] - ePos[0]) < pos[0]):
+                    pos[0] = abs(hPos[0] - ePos[0])
+                    pos[1] = i
+            print(ePos) if debug else None
+            elites[pos[1]] = 1
+        self.elitePos = elites
+        return elites
+    
     def grabActionOrder(self, debug = False):
         actionOrder = ["Enemy", "Enemy"]
         aop = self.actionOrderPos
@@ -265,27 +295,45 @@ if __name__ == '__main__':
 
     def testGrab(num = 1):
         src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
-        src.grabAllyUlts(debug=False)
+        ults = src.grabAllyUlts(debug=False)
         sp = src.grabSp()
-        weak = src.grabEnemyWeakness(debug=True)
-        print(src.ults, f"sp: {sp}")
+        enemyHp = src.grabEnemyHp(debug=False)
+        weak = src.grabEnemyWeakness(debug=False)
+        elitePos = src.grabElites(debug=False)
+        actionOrder = src.grabActionOrder(debug=False)
+        print(ults, f"sp: {sp}")
+        print(f"EnemyHp : {enemyHp}")
         for i in range(5):
             print(f"enemy{i} weak to [", end="")
             for j in range(7):
                 if(weak[i][j] == 1):
                     print(src.weaknesses[j], end=(", " if j!=6 else ""))
             print("]")
+        print(f"ElitePos : {elitePos}")
+        print(f"ActionOrder : {actionOrder}")
 
     def testGrabHp(num = 1):
         src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         hp = src.grabEnemyHp(debug=False)
         print(hp)
+
+    def testGrabEnemyWeakness(num = 1):
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
+        enemyWeakness = src.grabEnemyWeakness(debug=False)
+        print(enemyWeakness)
     
     def testGrabActionOrder(num = 1):
         src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
         actionOrder = src.grabActionOrder(debug=False)
         print(actionOrder)
-    #testGrab(5)
+
+    def testGrabElites(num = 1):
+        src.screenshot(path=f'{os.getcwd()}/DataGrabber/assets/ultGrabTest/{num}.png')
+        elites = src.grabElites(debug=False)
+        print(elites)
+
+    testGrab(1)
     for i in range(1, 7):
         #testGrab(num = i)
-        testGrabActionOrder(i)
+        #testGrabElites(i)
+        pass
